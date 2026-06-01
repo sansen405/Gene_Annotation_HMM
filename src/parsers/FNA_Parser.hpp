@@ -21,6 +21,8 @@ namespace gene_hmm {
             static size_t get_sequence_length(const string& fasta_path);
             static unordered_map<string, size_t> get_chromosome_offsets(const string& fasta_path);
             static vector<Chromosome_Range> get_chromosome_ranges(const string& fasta_path);
+
+            static vector<Nucleotide> reverse_complement(const vector<Nucleotide>& nucleotides);
     };
 
 }

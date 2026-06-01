@@ -16,6 +16,9 @@ namespace gene_hmm {
             static constexpr int IGNORED_REGION = 3;
 
             static vector<int> parse_regions(string& gff_path, string& fna_path);
+
+            //strand '-' builds the region vector in reverse-complement coordinates so minus-strand transcripts read as canonical forward genes
+            static vector<int> parse_regions(string& gff_path, string& fna_path, char strand);
             static vector<State> parse_states(vector<int> regions);
     };
 

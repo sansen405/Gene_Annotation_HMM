@@ -190,19 +190,13 @@ Emission_Model train_emissions(
             train_ranges,
             {State::INTERGENIC}));
 
-    model.intron_lp = Emission_Model::compute_markov1_log_probs(
-        Emission_Model::count_markov1_emissions(
+    model.intron_lp = Emission_Model::compute_markov5_log_probs(
+        Emission_Model::count_markov5_emissions(
             states,
             nucleotides,
             train_ranges,
             {State::INTRON_1, State::INTRON_2, State::INTRON_3}));
 
-    model.exon_lp = Emission_Model::compute_markov5_log_probs(
-        Emission_Model::count_markov5_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            {State::EXON_FRAME_1, State::EXON_FRAME_2, State::EXON_FRAME_3}));
     model.exon_frame_lp[0] = Emission_Model::compute_markov5_log_probs(
         Emission_Model::count_markov5_emissions(
             states,
@@ -221,60 +215,6 @@ Emission_Model train_emissions(
             nucleotides,
             train_ranges,
             {State::EXON_FRAME_3}));
-
-    auto start_targets = vector<State>{State::START_CODON_1};
-    model.start_codon_lp = Emission_Model::compute_pssm_log_odds(
-        Emission_Model::count_pssm_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            start_targets,
-            model.start_window_left,
-            model.start_window_right),
-        Emission_Model::count_pssm_background_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            start_targets,
-            model.start_window_left,
-            model.start_window_right,
-            Splice_Signal::START_CODON));
-
-    auto donor_targets = vector<State>{State::DONOR_1, State::DONOR_2, State::DONOR_3};
-    model.donor_lp = Emission_Model::compute_pssm_log_odds(
-        Emission_Model::count_pssm_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            donor_targets,
-            model.donor_window_left,
-            model.donor_window_right),
-        Emission_Model::count_pssm_background_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            donor_targets,
-            model.donor_window_left,
-            model.donor_window_right,
-            Splice_Signal::DONOR));
-
-    auto acceptor_targets = vector<State>{State::ACCEPTOR_1, State::ACCEPTOR_2, State::ACCEPTOR_3};
-    model.acceptor_lp = Emission_Model::compute_pssm_log_odds(
-        Emission_Model::count_pssm_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            acceptor_targets,
-            model.acceptor_window_left,
-            model.acceptor_window_right),
-        Emission_Model::count_pssm_background_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            acceptor_targets,
-            model.acceptor_window_left,
-            model.acceptor_window_right,
-            Splice_Signal::ACCEPTOR));
 
     return model;
 }
@@ -324,13 +264,59 @@ json confidence_for_range(
     return values;
 }
 
-void add_predictions_for_range(
-    json& predictions,
+struct Gene_Prediction {
+    size_t fwd_start = 0;
+    size_t fwd_end = 0;
+    Log_Prob score = 0.0;
+    json payload;
+};
+
+json map_intervals_to_forward(const json& revcomp_intervals, size_t length) {
+    json out = json::array();
+    for(const auto& interval : revcomp_intervals){
+        size_t rev_start = interval["start"].get<size_t>();
+        size_t rev_end = interval["end"].get<size_t>();
+        //revcomp 0-based [rev_start-1,rev_end) -> forward 0-based [L-rev_end,L-rev_start+1)
+        size_t fwd_start = length - rev_end;
+        size_t fwd_end = length - (rev_start - 1);
+        out.push_back({{"start", fwd_start + 1}, {"end", fwd_end}});
+    }
+    sort(out.begin(), out.end(), [](const json& a, const json& b){
+        return a["start"].get<size_t>() < b["start"].get<size_t>();
+    });
+    return out;
+}
+
+json confidence_for_range_minus(
+    const vector<State>& states,
+    const vector<double>& confidence,
+    size_t start,
+    size_t end,
+    size_t length)
+{
+    json values = json::array();
+    for(size_t pos = start; pos < end; pos++){
+        size_t fwd_position = length - 1 - pos;
+        values.push_back({
+            {"position", fwd_position + 1},
+            {"state", state_family(states[pos])},
+            {"confidence", confidence[pos]}
+        });
+    }
+    sort(values.begin(), values.end(), [](const json& a, const json& b){
+        return a["position"].get<size_t>() < b["position"].get<size_t>();
+    });
+    return values;
+}
+
+void collect_plus_genes(
+    vector<Gene_Prediction>& genes,
     const vector<Nucleotide>& chromosome_nucleotides,
     const vector<State>& chromosome_states,
     const vector<double>& chromosome_confidence,
     const string& scaffold,
-    size_t global_offset)
+    const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+    const Emission_Model& emission_model)
 {
     size_t pos = 0;
     while(pos < chromosome_states.size()){
@@ -345,27 +331,98 @@ void add_predictions_for_range(
         }
         size_t gene_end = pos;
 
-        string id = "pred_" + string(4 - min<size_t>(4, to_string(predictions.size() + 1).size()), '0') +
-                    to_string(predictions.size() + 1);
-
         json prediction;
-        prediction["id"] = id;
         prediction["scaffold"] = scaffold;
+        prediction["strand"] = "+";
         prediction["start"] = gene_start + 1;
         prediction["end"] = gene_end;
         prediction["exons"] = intervals_for_family(chromosome_states, 0, gene_start, gene_end, is_coding);
         prediction["introns"] = intervals_for_family(chromosome_states, 0, gene_start, gene_end, is_intron);
         prediction["intron_count"] = intervals_for_family(
-            chromosome_states,
-            0,
-            gene_start,
-            gene_end,
-            is_intron_body).size();
+            chromosome_states, 0, gene_start, gene_end, is_intron_body).size();
         prediction["sequence"] = sequence_preview(chromosome_nucleotides, gene_start, gene_end);
-        prediction["confidence"] = confidence_for_range(chromosome_states, chromosome_confidence, 0, gene_start, gene_end);
+        prediction["confidence"] = confidence_for_range(
+            chromosome_states, chromosome_confidence, 0, gene_start, gene_end);
 
-        predictions.push_back(prediction);
+        Log_Prob score = Viterbi::path_log_prob(
+            chromosome_states, chromosome_nucleotides, transition_log_probs,
+            emission_model, gene_start_penalty, gene_start, gene_end);
+
+        genes.push_back({gene_start, gene_end, score, prediction});
     }
+}
+
+void collect_minus_genes(
+    vector<Gene_Prediction>& genes,
+    const vector<Nucleotide>& chromosome_nucleotides,
+    const vector<State>& chromosome_states,
+    const vector<double>& chromosome_confidence,
+    const string& scaffold,
+    size_t length,
+    const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+    const Emission_Model& emission_model)
+{
+    size_t pos = 0;
+    while(pos < chromosome_states.size()){
+        if(!is_gene(chromosome_states[pos])){
+            pos++;
+            continue;
+        }
+
+        size_t gene_start = pos;
+        while(pos < chromosome_states.size() && is_gene(chromosome_states[pos])){
+            pos++;
+        }
+        size_t gene_end = pos;
+
+        size_t fwd_start = length - gene_end;
+        size_t fwd_end = length - gene_start;
+
+        json prediction;
+        prediction["scaffold"] = scaffold;
+        prediction["strand"] = "-";
+        prediction["start"] = fwd_start + 1;
+        prediction["end"] = fwd_end;
+        prediction["exons"] = map_intervals_to_forward(
+            intervals_for_family(chromosome_states, 0, gene_start, gene_end, is_coding), length);
+        prediction["introns"] = map_intervals_to_forward(
+            intervals_for_family(chromosome_states, 0, gene_start, gene_end, is_intron), length);
+        prediction["intron_count"] = intervals_for_family(
+            chromosome_states, 0, gene_start, gene_end, is_intron_body).size();
+        prediction["sequence"] = sequence_preview(chromosome_nucleotides, gene_start, gene_end);
+        prediction["confidence"] = confidence_for_range_minus(
+            chromosome_states, chromosome_confidence, gene_start, gene_end, length);
+
+        Log_Prob score = Viterbi::path_log_prob(
+            chromosome_states, chromosome_nucleotides, transition_log_probs,
+            emission_model, gene_start_penalty, gene_start, gene_end);
+
+        genes.push_back({fwd_start, fwd_end, score, prediction});
+    }
+}
+
+vector<Gene_Prediction> merge_strand_genes(vector<Gene_Prediction> genes) {
+    sort(genes.begin(), genes.end(), [](const Gene_Prediction& a, const Gene_Prediction& b){
+        if(a.fwd_start != b.fwd_start) return a.fwd_start < b.fwd_start;
+        return a.fwd_end < b.fwd_end;
+    });
+
+    vector<Gene_Prediction> kept;
+    for(auto& gene : genes){
+        bool drop = false;
+        while(!kept.empty() && kept.back().fwd_end > gene.fwd_start){
+            if(gene.score > kept.back().score){
+                kept.pop_back();
+            } else {
+                drop = true;
+                break;
+            }
+        }
+        if(!drop){
+            kept.push_back(gene);
+        }
+    }
+    return kept;
 }
 
 string value_after_arg(int argc, char** argv, const string& name, const string& fallback) {
@@ -377,7 +434,7 @@ string value_after_arg(int argc, char** argv, const string& name, const string& 
     return fallback;
 }
 
-} // namespace
+}
 
 namespace gene_hmm {
     extern Genome_Profile profile;
@@ -388,6 +445,9 @@ int main(int argc, char** argv) {
         string input_fna = value_after_arg(argc, argv, "--fna", "");
         string profile_path = value_after_arg(argc, argv, "--profile", "");
         string splice_cnn_scores_path = value_after_arg(argc, argv, "--splice-cnn-scores", "");
+        string start_cnn_scores_path = value_after_arg(argc, argv, "--start-cnn-scores", "");
+        string splice_cnn_scores_minus_path = value_after_arg(argc, argv, "--splice-cnn-scores-minus", "");
+        string start_cnn_scores_minus_path = value_after_arg(argc, argv, "--start-cnn-scores-minus", "");
         if(input_fna.empty()){
             throw runtime_error("--fna PATH is required.");
         }
@@ -415,6 +475,31 @@ int main(int argc, char** argv) {
             gene_hmm::profile.splice_cnn.acceptor_scale,
             gene_hmm::profile.splice_cnn.acceptor_bias);
 
+        if(start_cnn_scores_path.empty()){
+            throw runtime_error("--start-cnn-scores PATH is required for CNN start emissions.");
+        }
+        emission_model.load_start_cnn_scores(start_cnn_scores_path, input_nucleotides.size());
+        emission_model.set_start_cnn_calibration(
+            gene_hmm::profile.start_cnn.start_scale,
+            gene_hmm::profile.start_cnn.start_bias);
+
+        bool dual_strand = gene_hmm::profile.include_minus_strand &&
+            !splice_cnn_scores_minus_path.empty() &&
+            !start_cnn_scores_minus_path.empty();
+        Emission_Model emission_model_minus = emission_model;
+        if(dual_strand){
+            emission_model_minus.load_splice_cnn_scores(splice_cnn_scores_minus_path, input_nucleotides.size());
+            emission_model_minus.set_splice_cnn_calibration(
+                gene_hmm::profile.splice_cnn.donor_scale,
+                gene_hmm::profile.splice_cnn.donor_bias,
+                gene_hmm::profile.splice_cnn.acceptor_scale,
+                gene_hmm::profile.splice_cnn.acceptor_bias);
+            emission_model_minus.load_start_cnn_scores(start_cnn_scores_minus_path, input_nucleotides.size());
+            emission_model_minus.set_start_cnn_calibration(
+                gene_hmm::profile.start_cnn.start_scale,
+                gene_hmm::profile.start_cnn.start_bias);
+        }
+
         json result;
         result["summary"] = {
             {"inputFile", input_fna.substr(input_fna.find_last_of("/\\") + 1)},
@@ -428,8 +513,10 @@ int main(int argc, char** argv) {
         result["predictions"] = json::array();
         result["confidenceByScaffold"] = json::object();
 
+        vector<Gene_Prediction> all_genes;
         for(const auto& range : input_ranges){
             emission_model.set_splice_cnn_position_offset(range.start);
+            emission_model.set_start_cnn_position_offset(range.start);
             vector<Nucleotide> chromosome_nucleotides = slice_nucleotides(input_nucleotides, range.start, range.end);
             vector<State> chromosome_states = Viterbi::decode(
                 chromosome_nucleotides,
@@ -456,13 +543,53 @@ int main(int argc, char** argv) {
                 0,
                 chromosome_states.size());
 
-            add_predictions_for_range(
-                result["predictions"],
+            vector<Gene_Prediction> scaffold_genes;
+            collect_plus_genes(
+                scaffold_genes,
                 chromosome_nucleotides,
                 chromosome_states,
                 chromosome_confidence,
                 range.name,
-                range.start);
+                transition_log_probs,
+                emission_model);
+
+            if(dual_strand){
+                emission_model_minus.set_splice_cnn_position_offset(range.start);
+                emission_model_minus.set_start_cnn_position_offset(range.start);
+                vector<Nucleotide> revcomp_nucleotides = FNA_Parser::reverse_complement(chromosome_nucleotides);
+                vector<State> minus_states = Viterbi::decode(
+                    revcomp_nucleotides,
+                    transition_log_probs,
+                    emission_model_minus,
+                    0,
+                    numeric_limits<size_t>::max(),
+                    gene_start_penalty);
+                vector<double> minus_confidence = Forward_Backward::confidence(
+                    revcomp_nucleotides,
+                    minus_states,
+                    transition_log_probs,
+                    emission_model_minus,
+                    gene_start_penalty);
+                collect_minus_genes(
+                    scaffold_genes,
+                    revcomp_nucleotides,
+                    minus_states,
+                    minus_confidence,
+                    range.name,
+                    revcomp_nucleotides.size(),
+                    transition_log_probs,
+                    emission_model_minus);
+            }
+
+            vector<Gene_Prediction> merged = merge_strand_genes(scaffold_genes);
+            all_genes.insert(all_genes.end(), merged.begin(), merged.end());
+        }
+
+        for(auto& gene : all_genes){
+            string id = "pred_" + string(4 - min<size_t>(4, to_string(result["predictions"].size() + 1).size()), '0') +
+                        to_string(result["predictions"].size() + 1);
+            gene.payload["id"] = id;
+            result["predictions"].push_back(gene.payload);
         }
 
         size_t exon_count = 0;

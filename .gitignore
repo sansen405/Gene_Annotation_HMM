@@ -1,4 +1,5 @@
 # Keep large non-yeast genome source datasets local.
+genome_data/fungi_diverse/
 genome_data/aspergillus/
 genome_data/c_elegans/
 genome_data/candida/
@@ -16,14 +17,15 @@ __pycache__/
 **/__pycache__/
 *.pyc
 
+# Local Python virtual environment.
+.venv/
+venv/
+
 # Local CNN training artifacts (keep test scores, ignore train scores).
 genome_data/fission_yeasts/**/train/*.tsv
-src/model/cnn/trained_models/*
-!src/model/cnn/trained_models/.gitkeep
-!src/model/cnn/trained_models/*.pt
-src/model/CNN/trained_models/*
-!src/model/CNN/trained_models/.gitkeep
-!src/model/CNN/trained_models/*.pt
+src/model/cnn/**/trained_models/*
+!src/model/cnn/**/trained_models/.gitkeep
+!src/model/cnn/**/trained_models/*.pt
 src/model/training_pipeline/trained_models/*
 !src/model/training_pipeline/trained_models/.gitkeep
 # Track the cached HMM artifacts so the model is loadable without retraining.
@@ -31,7 +33,7 @@ src/model/training_pipeline/trained_models/*
 !src/model/training_pipeline/trained_models/*/emission_matrix.json
 !src/model/training_pipeline/trained_models/*/transition_matrix.json
 !src/model/training_pipeline/trained_models/*/metadata.json
-src/model/cnn/*_scores.tsv
+src/model/cnn/**/*_scores.tsv
 
 # Generated validation outputs can exceed GitHub's file size limit.
 validation/results/fission_yeasts_cnn_s_pombe.txt

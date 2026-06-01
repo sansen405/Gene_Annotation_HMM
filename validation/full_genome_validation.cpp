@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
+#include <system_error>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -35,11 +37,16 @@ Log_Prob donor_cnn_scale = 1.0;
 Log_Prob donor_cnn_bias = 0.0;
 Log_Prob acceptor_cnn_scale = 1.0;
 Log_Prob acceptor_cnn_bias = 0.0;
+string start_cnn_scores_path;
+Log_Prob start_cnn_scale = 1.0;
+Log_Prob start_cnn_bias = 0.0;
 bool tune_cnn_calibration = false;
+bool tune_start_calibration = false;
 bool tune_only = false;
 size_t tune_subset_ranges = 64;
 bool collect_start_positions = false;
 string start_offset_report_path;
+string results_dir;
 const long START_MATCH_WINDOW = 300;
 
 struct Binary_Metrics {
@@ -51,8 +58,8 @@ struct Binary_Metrics {
 
 struct Interval {
     string chromosome;
-    size_t start = 0; // 0-based, chromosome-local, inclusive
-    size_t end = 0;   // 0-based, chromosome-local, exclusive
+    size_t start = 0;
+    size_t end = 0;
 };
 
 struct Validation_Result {
@@ -75,13 +82,10 @@ struct Validation_Result {
     size_t acceptor_exact = 0;
     vector<Interval> predicted_gene_intervals;
     vector<Interval> gold_gene_intervals;
-    // Start-boundary offset diagnostic (populated when collect_start_positions
-    // is set). Offsets are signed (predicted - nearest gold) within the same
-    // usable interval, in base pairs.
-    vector<long> pred_start_signed_offset; // one per predicted start that had >=1 gold start in its interval
-    vector<long> gold_start_nearest_dist;  // one per gold start that had >=1 predicted start in its interval
-    size_t pred_starts_no_gold = 0;        // predicted starts in an interval with no gold start
-    size_t gold_starts_no_pred = 0;        // gold starts in an interval with no predicted start
+    vector<long> pred_start_signed_offset;
+    vector<long> gold_start_nearest_dist;
+    size_t pred_starts_no_gold = 0;
+    size_t gold_starts_no_pred = 0;
 };
 
 struct Sequence_Data {
@@ -151,6 +155,10 @@ double calibration_objective(const Validation_Result& result) {
         boundary_f1(result.acceptor_exact, result.acceptor_predicted, result.acceptor_gold)) / 3.0;
 }
 
+double start_calibration_objective(const Validation_Result& result) {
+    return boundary_f1(result.start_exact, result.start_predicted, result.start_gold);
+}
+
 Binary_Metrics binary_metrics(
     const vector<State>& predicted,
     const vector<State>& gold,
@@ -176,13 +184,13 @@ void add_metrics(Binary_Metrics& total, const Binary_Metrics& next) {
     total.tn += next.tn;
 }
 
-void print_binary_metrics_row(const string& label, const Binary_Metrics& metrics) {
+void print_binary_metrics_row(ostream& out, const string& label, const Binary_Metrics& metrics) {
     double precision = divide(metrics.tp, metrics.tp + metrics.fp);
     double recall = divide(metrics.tp, metrics.tp + metrics.fn);
     double accuracy = divide(metrics.tp + metrics.tn, metrics.tp + metrics.fp + metrics.fn + metrics.tn);
 
-    cout << fixed << setprecision(4);
-    cout << left << setw(12) << label
+    out << fixed << setprecision(4);
+    out << left << setw(12) << label
          << right << setw(12) << precision
          << setw(12) << recall
          << setw(12) << f1(precision, recall)
@@ -193,8 +201,8 @@ void print_binary_metrics_row(const string& label, const Binary_Metrics& metrics
          << setw(10) << metrics.tn << "\n";
 }
 
-void print_binary_metrics_header() {
-    cout << left << setw(12) << "Label"
+void print_binary_metrics_header(ostream& out) {
+    out << left << setw(12) << "Label"
          << right << setw(12) << "Precision"
          << setw(12) << "Recall"
          << setw(12) << "F1"
@@ -206,13 +214,14 @@ void print_binary_metrics_header() {
 }
 
 void print_boundary_metrics_row(
+    ostream& out,
     const string& label,
     size_t exact,
     size_t predicted,
     size_t gold)
 {
-    cout << fixed << setprecision(4);
-    cout << left << setw(12) << label
+    out << fixed << setprecision(4);
+    out << left << setw(12) << label
          << right << setw(12) << divide(exact, predicted)
          << setw(12) << divide(exact, gold)
          << setw(12) << exact
@@ -220,8 +229,8 @@ void print_boundary_metrics_row(
          << setw(12) << gold << "\n";
 }
 
-void print_boundary_metrics_header() {
-    cout << left << setw(12) << "Boundary"
+void print_boundary_metrics_header(ostream& out) {
+    out << left << setw(12) << "Boundary"
          << right << setw(12) << "Precision"
          << setw(12) << "Recall"
          << setw(12) << "Exact"
@@ -259,19 +268,13 @@ Emission_Model train_emissions(
             train_ranges,
             {State::INTERGENIC}));
 
-    model.intron_lp = Emission_Model::compute_markov1_log_probs(
-        Emission_Model::count_markov1_emissions(
+    model.intron_lp = Emission_Model::compute_markov5_log_probs(
+        Emission_Model::count_markov5_emissions(
             states,
             nucleotides,
             train_ranges,
             {State::INTRON_1, State::INTRON_2, State::INTRON_3}));
 
-    model.exon_lp = Emission_Model::compute_markov5_log_probs(
-        Emission_Model::count_markov5_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            {State::EXON_FRAME_1, State::EXON_FRAME_2, State::EXON_FRAME_3}));
     model.exon_frame_lp[0] = Emission_Model::compute_markov5_log_probs(
         Emission_Model::count_markov5_emissions(
             states,
@@ -290,60 +293,6 @@ Emission_Model train_emissions(
             nucleotides,
             train_ranges,
             {State::EXON_FRAME_3}));
-
-    auto start_targets = vector<State>{State::START_CODON_1};
-    model.start_codon_lp = Emission_Model::compute_pssm_log_odds(
-        Emission_Model::count_pssm_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            start_targets,
-            model.start_window_left,
-            model.start_window_right),
-        Emission_Model::count_pssm_background_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            start_targets,
-            model.start_window_left,
-            model.start_window_right,
-            Splice_Signal::START_CODON));
-
-    auto donor_targets = vector<State>{State::DONOR_1, State::DONOR_2, State::DONOR_3};
-    model.donor_lp = Emission_Model::compute_pssm_log_odds(
-        Emission_Model::count_pssm_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            donor_targets,
-            model.donor_window_left,
-            model.donor_window_right),
-        Emission_Model::count_pssm_background_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            donor_targets,
-            model.donor_window_left,
-            model.donor_window_right,
-            Splice_Signal::DONOR));
-
-    auto acceptor_targets = vector<State>{State::ACCEPTOR_1, State::ACCEPTOR_2, State::ACCEPTOR_3};
-    model.acceptor_lp = Emission_Model::compute_pssm_log_odds(
-        Emission_Model::count_pssm_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            acceptor_targets,
-            model.acceptor_window_left,
-            model.acceptor_window_right),
-        Emission_Model::count_pssm_background_emissions(
-            states,
-            nucleotides,
-            train_ranges,
-            acceptor_targets,
-            model.acceptor_window_left,
-            model.acceptor_window_right,
-            Splice_Signal::ACCEPTOR));
 
     return model;
 }
@@ -427,11 +376,6 @@ size_t percentile_length(vector<size_t> lengths, double percentile) {
     return lengths[index];
 }
 
-// Smoothed empirical histogram of training intron-body lengths over [1, max],
-// returned as log probabilities indexed by length. Add-1 smoothing keeps every
-// in-range length finite; the decoder caps the body length at `max`, so longer
-// lengths are unreachable. Replaces the implicit geometric duration with the
-// true (tightly peaked) intron length distribution.
 vector<Log_Prob> build_intron_length_log_probs(
     const vector<size_t>& lengths,
     size_t max_length,
@@ -619,6 +563,84 @@ Sequence_Data load_evaluation_data(const Genome_Profile& profile) {
     return combined;
 }
 
+void append_dataset_minus(
+    Sequence_Data& combined,
+    const string& name,
+    const string& fasta_path,
+    const string& gff_path)
+{
+    size_t offset = combined.nucleotides.size();
+    combined.dataset_offsets.push_back(offset);
+
+    vector<Nucleotide> nucleotides = FNA_Parser::parse_sequence(fasta_path);
+    vector<Chromosome_Range> chromosomes = FNA_Parser::get_chromosome_ranges(fasta_path);
+
+    for (const auto& chromosome : chromosomes) {
+        vector<Nucleotide> slice(
+            nucleotides.begin() + chromosome.start,
+            nucleotides.begin() + chromosome.end);
+        vector<Nucleotide> revcomp = FNA_Parser::reverse_complement(slice);
+        copy(revcomp.begin(), revcomp.end(), nucleotides.begin() + chromosome.start);
+    }
+
+    string mutable_gff_path = gff_path;
+    string mutable_fasta_path = fasta_path;
+    vector<int> regions = GFF_Parser::parse_regions(mutable_gff_path, mutable_fasta_path, '-');
+    vector<State> states = GFF_Parser::parse_states(regions);
+
+    if (states.size() != nucleotides.size()) {
+        throw runtime_error("Minus-strand state length does not match nucleotide length for " + name + ".");
+    }
+
+    combined.nucleotides.insert(combined.nucleotides.end(), nucleotides.begin(), nucleotides.end());
+    combined.states.insert(combined.states.end(), states.begin(), states.end());
+    combined.regions.insert(combined.regions.end(), regions.begin(), regions.end());
+    for (auto range : chromosomes) {
+        range.name = name + ":" + range.name;
+        range.start += offset;
+        range.end += offset;
+        combined.chromosomes.push_back(range);
+    }
+}
+
+Sequence_Data load_evaluation_data_minus(const Genome_Profile& profile) {
+    Sequence_Data combined;
+    for (const auto& dataset : profile.species) {
+        append_dataset_minus(combined, dataset.name, dataset.test_fasta_path, dataset.test_gff_path);
+    }
+    return combined;
+}
+
+Validation_Result merge_validation_results(const Validation_Result& a, const Validation_Result& b) {
+    Validation_Result merged = a;
+    add_metrics(merged.coding_total, b.coding_total);
+    add_metrics(merged.intron_total, b.intron_total);
+    merged.total_bases += b.total_bases;
+    merged.exact_matches += b.exact_matches;
+    merged.illegal_transitions += b.illegal_transitions;
+    merged.start_predicted += b.start_predicted;
+    merged.start_gold += b.start_gold;
+    merged.start_exact += b.start_exact;
+    merged.stop_predicted += b.stop_predicted;
+    merged.stop_gold += b.stop_gold;
+    merged.stop_exact += b.stop_exact;
+    merged.donor_predicted += b.donor_predicted;
+    merged.donor_gold += b.donor_gold;
+    merged.donor_exact += b.donor_exact;
+    merged.acceptor_predicted += b.acceptor_predicted;
+    merged.acceptor_gold += b.acceptor_gold;
+    merged.acceptor_exact += b.acceptor_exact;
+    merged.predicted_gene_intervals.insert(
+        merged.predicted_gene_intervals.end(),
+        b.predicted_gene_intervals.begin(),
+        b.predicted_gene_intervals.end());
+    merged.gold_gene_intervals.insert(
+        merged.gold_gene_intervals.end(),
+        b.gold_gene_intervals.begin(),
+        b.gold_gene_intervals.end());
+    return merged;
+}
+
 void print_state_family_counts(const string& label, const vector<State>& states) {
     cout << label
          << " intergenic=" << count_state(states, State::INTERGENIC)
@@ -706,11 +728,16 @@ void print_usage(const string& program_name) {
     cerr << "  --cnn-donor-bias VALUE   Donor CNN logit offset, default from profile or 0.0\n";
     cerr << "  --cnn-acceptor-scale VALUE  Acceptor CNN logit multiplier, default from profile or 1.0\n";
     cerr << "  --cnn-acceptor-bias VALUE   Acceptor CNN logit offset, default from profile or 0.0\n";
-    cerr << "  --tune-cnn-calibration   Grid-search CNN calibration on the evaluation labels\n";
+    cerr << "  --start-cnn-scores PATH  CNN start score TSV for evaluation sequence (else profile start_cnn.test_scores)\n";
+    cerr << "  --cnn-start-scale VALUE  Start CNN logit multiplier, default from profile or 1.0\n";
+    cerr << "  --cnn-start-bias VALUE   Start CNN logit offset, default from profile or 0.0\n";
+    cerr << "  --tune-cnn-calibration   Grid-search splice CNN calibration on the evaluation labels\n";
+    cerr << "  --tune-start-calibration Grid-search start CNN scale/bias on the TRAINING labels\n";
     cerr << "  --tune-only              Stop after selecting CNN calibration\n";
     cerr << "  --tune-subset-ranges N   Usable evaluation intervals for tuning, default 64\n";
     cerr << "  --gene-start-penalty VALUE  Log-prob penalty on INTERGENIC -> START_CODON_1, default 1.0\n";
     cerr << "  --start-offset-report PATH  Write a start-boundary offset diagnostic (per-species + combined) to PATH\n";
+    cerr << "  --results-dir DIR        Write combined.txt and per-species result files into DIR\n";
     cerr << "  --start-window-left N    Start-codon PSSM bases upstream of the ATG (retrains the PSSM), default 6\n";
     cerr << "  --start-window-right N   Start-codon PSSM bases from the ATG onward (>=3 covers ATG), default 9\n";
     cerr << "  --transition-alpha VALUE Transition smoothing alpha, default 0.02\n";
@@ -737,12 +764,18 @@ Genome_Profile parse_args(int argc, char** argv) {
     bool donor_bias_set = false;
     bool acceptor_scale_set = false;
     bool acceptor_bias_set = false;
+    bool start_scale_set = false;
+    bool start_bias_set = false;
 
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
         if (arg == "--help" || arg == "-h") {
             print_usage(argv[0]);
             exit(0);
+        }
+        if (arg == "--tune-start-calibration") {
+            tune_start_calibration = true;
+            continue;
         }
         if (arg == "--tune-cnn-calibration") {
             tune_cnn_calibration = true;
@@ -785,12 +818,22 @@ Genome_Profile parse_args(int argc, char** argv) {
         } else if (arg == "--cnn-acceptor-bias") {
             acceptor_cnn_bias = stod(value);
             acceptor_bias_set = true;
+        } else if (arg == "--start-cnn-scores") {
+            start_cnn_scores_path = value;
+        } else if (arg == "--cnn-start-scale") {
+            start_cnn_scale = stod(value);
+            start_scale_set = true;
+        } else if (arg == "--cnn-start-bias") {
+            start_cnn_bias = stod(value);
+            start_bias_set = true;
         } else if (arg == "--tune-subset-ranges") {
             tune_subset_ranges = stoull(value);
         } else if (arg == "--gene-start-penalty") {
             gene_start_penalty = stod(value);
         } else if (arg == "--start-offset-report") {
             start_offset_report_path = value;
+        } else if (arg == "--results-dir") {
+            results_dir = value;
         } else if (arg == "--start-window-left") {
             profile.emissions["START_CODON"].window_left = stoull(value);
         } else if (arg == "--start-window-right") {
@@ -835,11 +878,12 @@ Genome_Profile parse_args(int argc, char** argv) {
     if (!donor_bias_set) donor_cnn_bias = profile.splice_cnn.donor_bias;
     if (!acceptor_scale_set) acceptor_cnn_scale = profile.splice_cnn.acceptor_scale;
     if (!acceptor_bias_set) acceptor_cnn_bias = profile.splice_cnn.acceptor_bias;
+    if (!start_scale_set) start_cnn_scale = profile.start_cnn.start_scale;
+    if (!start_bias_set) start_cnn_bias = profile.start_cnn.start_bias;
 
     return profile;
 }
 
-// Positions (interval-local) of every START_CODON_1 in a decoded path.
 vector<size_t> start_codon_positions(const vector<State>& states) {
     vector<size_t> positions;
     for (size_t i = 0; i < states.size(); ++i) {
@@ -848,10 +892,6 @@ vector<size_t> start_codon_positions(const vector<State>& states) {
     return positions;
 }
 
-// For one usable interval, record how far each predicted gene start sits from
-// the nearest gold gene start (and vice versa). Predicted starts in an interval
-// with no gold start (or gold with no prediction) are counted separately as
-// spurious / missed rather than producing a misleading nearest distance.
 void accumulate_start_offsets(
     const vector<State>& predicted,
     const vector<State>& gold,
@@ -911,17 +951,16 @@ void write_start_offset_report(ostream& out, const string& title, const Validati
     size_t pred_total = result.pred_start_signed_offset.size() + result.pred_starts_no_gold;
     size_t gold_total = result.gold_start_nearest_dist.size() + result.gold_starts_no_pred;
 
-    size_t exact = 0;          // offset == 0
-    size_t within_window = 0;  // 0 < |offset| <= W  (shifted but same gene)
-    size_t spurious = result.pred_starts_no_gold; // no gold in interval
-    size_t upstream = 0;       // predicted start before gold (offset < 0)
-    size_t downstream = 0;     // predicted start after gold (offset > 0)
-    size_t in_frame = 0;       // nonzero offset divisible by 3, within window
-    size_t out_frame = 0;      // nonzero offset not divisible by 3, within window
+    size_t exact = 0;
+    size_t within_window = 0;
+    size_t spurious = result.pred_starts_no_gold;
+    size_t upstream = 0;
+    size_t downstream = 0;
+    size_t in_frame = 0;
+    size_t out_frame = 0;
 
-    // |offset| buckets for shifted-but-matched predicted starts
     size_t b_1_2 = 0, b_3 = 0, b_4_9 = 0, b_10_30 = 0, b_31_100 = 0, b_101_W = 0;
-    vector<long> matched_abs; // for median
+    vector<long> matched_abs;
 
     for (long off : result.pred_start_signed_offset) {
         long a = labs(off);
@@ -988,6 +1027,7 @@ Validation_Result decode_validation(
 
     for (const auto& range : eval_ranges) {
         emission_model.set_splice_cnn_position_offset(range.start);
+        emission_model.set_start_cnn_position_offset(range.start);
         vector<Nucleotide> chromosome_nucleotides =
             slice_nucleotides(eval_data.nucleotides, range.start, range.end);
         vector<State> chromosome_gold =
@@ -1088,10 +1128,6 @@ void tune_splice_cnn_calibration(
         {donor_cnn_scale, donor_cnn_bias, acceptor_cnn_scale, acceptor_cnn_bias}
     };
     const vector<Log_Prob> scales{0.35, 0.50, 0.75, 1.00, 1.25, 1.50};
-    // Donor/acceptor emissions compete directly against the exon/intron
-    // log-likelihoods, so the operating bias depends on where the raw CNN
-    // logits sit relative to those. Search a wide symmetric range so the
-    // optimum is never pinned to a grid edge.
     const vector<Log_Prob> donor_biases{-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0};
     const vector<Log_Prob> acceptor_biases{-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0};
     for (Log_Prob scale : scales) {
@@ -1180,7 +1216,112 @@ void tune_splice_cnn_calibration(
          << "\n";
 }
 
-} // namespace
+void tune_start_cnn_calibration(
+    Emission_Model& emission_model,
+    const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+    const Sequence_Data& train_data,
+    const vector<Chromosome_Range>& train_ranges,
+    size_t max_intron_body_length)
+{
+    const vector<Log_Prob> scales{0.50, 0.75, 1.00, 1.25};
+    const vector<Log_Prob> biases{-6.0, -5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 1.0};
+
+    const vector<Chromosome_Range> tuning_ranges =
+        evenly_spaced_ranges(train_ranges, tune_subset_ranges);
+
+    double best_objective = -1.0;
+    Log_Prob best_scale = start_cnn_scale;
+    Log_Prob best_bias = start_cnn_bias;
+    size_t tried = 0;
+    const size_t total = scales.size() * biases.size();
+
+    cout << "\nTuning start-CNN calibration on TRAINING labels"
+         << " objective=start boundary F1\n";
+    cout << "Tuning subset: " << tuning_ranges.size()
+         << "/" << train_ranges.size()
+         << " usable training intervals\n";
+
+    for (Log_Prob scale : scales) {
+        for (Log_Prob bias : biases) {
+            emission_model.set_start_cnn_calibration(scale, bias);
+            Validation_Result result = decode_validation(
+                emission_model,
+                transition_log_probs,
+                train_data,
+                tuning_ranges,
+                max_intron_body_length,
+                false);
+            double objective = start_calibration_objective(result);
+            tried++;
+
+            cout << "  candidate " << tried << "/" << total
+                 << " objective=" << fixed << setprecision(4) << objective
+                 << " start_scale=" << scale
+                 << " start_bias=" << bias
+                 << " predicted=" << result.start_predicted
+                 << " gold=" << result.start_gold
+                 << "\n";
+
+            if (objective > best_objective) {
+                best_objective = objective;
+                best_scale = scale;
+                best_bias = bias;
+                cout << "  new best objective=" << fixed << setprecision(4) << best_objective
+                     << " start_scale=" << scale
+                     << " start_bias=" << bias
+                     << "\n";
+            }
+        }
+    }
+
+    start_cnn_scale = best_scale;
+    start_cnn_bias = best_bias;
+    emission_model.set_start_cnn_calibration(start_cnn_scale, start_cnn_bias);
+
+    cout << "Selected start-CNN calibration:"
+         << " start_scale=" << start_cnn_scale
+         << " start_bias=" << start_cnn_bias
+         << " objective=" << best_objective
+         << "\n";
+}
+
+void write_validation_report(
+    ostream& out,
+    const string& header,
+    const Validation_Result& result,
+    size_t max_intron_body_length)
+{
+    out << "\n=== " << header << " ===\n";
+    out << fixed << setprecision(4);
+    out << left << setw(28) << "Metric" << right << setw(14) << "Value" << "\n";
+    out << left << setw(28) << "Evaluated bases" << right << setw(14) << result.total_bases << "\n";
+    out << left << setw(28) << "Exact 21-state accuracy" << right << setw(14) << divide(result.exact_matches, result.total_bases) << "\n";
+    out << left << setw(28) << "Illegal transitions" << right << setw(14) << result.illegal_transitions << "\n";
+    out << left << setw(28) << "Predicted gene intervals" << right << setw(14) << result.predicted_gene_intervals.size() << "\n";
+    out << left << setw(28) << "Gold gene intervals" << right << setw(14) << result.gold_gene_intervals.size() << "\n";
+    out << left << setw(28) << "Intron length cap p95" << right << setw(14) << max_intron_body_length << "\n";
+    out << left << setw(28) << "Gene start penalty" << right << setw(14) << gene_start_penalty << "\n";
+    out << left << setw(28) << "CNN donor scale" << right << setw(14) << donor_cnn_scale << "\n";
+    out << left << setw(28) << "CNN donor bias" << right << setw(14) << donor_cnn_bias << "\n";
+    out << left << setw(28) << "CNN acceptor scale" << right << setw(14) << acceptor_cnn_scale << "\n";
+    out << left << setw(28) << "CNN acceptor bias" << right << setw(14) << acceptor_cnn_bias << "\n";
+    out << left << setw(28) << "CNN start scale" << right << setw(14) << start_cnn_scale << "\n";
+    out << left << setw(28) << "CNN start bias" << right << setw(14) << start_cnn_bias << "\n";
+
+    out << "\nClassification Metrics:\n";
+    print_binary_metrics_header(out);
+    print_binary_metrics_row(out, "coding", result.coding_total);
+    print_binary_metrics_row(out, "intron", result.intron_total);
+
+    out << "\nBoundary Metrics:\n";
+    print_boundary_metrics_header(out);
+    print_boundary_metrics_row(out, "start", result.start_exact, result.start_predicted, result.start_gold);
+    print_boundary_metrics_row(out, "stop", result.stop_exact, result.stop_predicted, result.stop_gold);
+    print_boundary_metrics_row(out, "donor", result.donor_exact, result.donor_predicted, result.donor_gold);
+    print_boundary_metrics_row(out, "acceptor", result.acceptor_exact, result.acceptor_predicted, result.acceptor_gold);
+}
+
+}
 
 int main(int argc, char** argv) {
     gene_hmm::profile = parse_args(argc, argv);
@@ -1245,10 +1386,74 @@ int main(int argc, char** argv) {
         donor_cnn_bias,
         acceptor_cnn_scale,
         acceptor_cnn_bias);
+
+    if (!start_cnn_scores_path.empty()) {
+        emission_model.load_start_cnn_scores(start_cnn_scores_path, eval_data.nucleotides.size());
+    } else if (!gene_hmm::profile.start_cnn.test_score_paths.empty()) {
+        if (gene_hmm::profile.start_cnn.test_score_paths.size() != eval_data.dataset_offsets.size()) {
+            cerr << "Profile start_cnn.test_scores count does not match evaluation datasets.\n";
+            return 1;
+        }
+        emission_model.load_start_cnn_scores(
+            gene_hmm::profile.start_cnn.test_score_paths,
+            eval_data.dataset_offsets,
+            eval_data.nucleotides.size());
+    } else {
+        cerr << "Provide --start-cnn-scores or define start_cnn.test_scores in the profile.\n";
+        return 1;
+    }
+    emission_model.set_start_cnn_calibration(start_cnn_scale, start_cnn_bias);
+
     vector<size_t> train_intron_body_lengths = collect_intron_body_lengths(train_data.states, train_ranges);
     size_t max_intron_body_length = percentile_length(train_intron_body_lengths, intron_cap_percentile);
     intron_length_log_probs = build_intron_length_log_probs(
         train_intron_body_lengths, max_intron_body_length, intron_length_temperature);
+
+    if (tune_start_calibration) {
+        const auto& splice_train_paths = gene_hmm::profile.splice_cnn.train_score_paths;
+        const auto& start_train_paths = gene_hmm::profile.start_cnn.train_score_paths;
+        if (splice_train_paths.size() != train_data.dataset_offsets.size() ||
+            start_train_paths.size() != train_data.dataset_offsets.size()) {
+            cerr << "Profile train_scores count does not match training datasets;"
+                 << " cannot fit start calibration.\n";
+            return 1;
+        }
+        emission_model.load_splice_cnn_scores(
+            splice_train_paths, train_data.dataset_offsets, train_data.nucleotides.size());
+        emission_model.load_start_cnn_scores(
+            start_train_paths, train_data.dataset_offsets, train_data.nucleotides.size());
+
+        tune_start_cnn_calibration(
+            emission_model,
+            transition_log_probs,
+            train_data,
+            train_ranges,
+            max_intron_body_length);
+
+        if (!splice_cnn_scores_path.empty()) {
+            emission_model.load_splice_cnn_scores(splice_cnn_scores_path, eval_data.nucleotides.size());
+        } else {
+            emission_model.load_splice_cnn_scores(
+                gene_hmm::profile.splice_cnn.test_score_paths,
+                eval_data.dataset_offsets,
+                eval_data.nucleotides.size());
+        }
+        if (!start_cnn_scores_path.empty()) {
+            emission_model.load_start_cnn_scores(start_cnn_scores_path, eval_data.nucleotides.size());
+        } else {
+            emission_model.load_start_cnn_scores(
+                gene_hmm::profile.start_cnn.test_score_paths,
+                eval_data.dataset_offsets,
+                eval_data.nucleotides.size());
+        }
+        emission_model.set_splice_cnn_calibration(
+            donor_cnn_scale, donor_cnn_bias, acceptor_cnn_scale, acceptor_cnn_bias);
+        emission_model.set_start_cnn_calibration(start_cnn_scale, start_cnn_bias);
+
+        if (tune_only) {
+            return 0;
+        }
+    }
 
     if (tune_cnn_calibration) {
         tune_splice_cnn_calibration(
@@ -1270,9 +1475,6 @@ int main(int argc, char** argv) {
             return 1;
         }
         report << "Gene start penalty: " << fixed << setprecision(4) << gene_start_penalty << "\n";
-        report << "Start PSSM window: left=" << emission_model.start_window_left
-               << " right=" << emission_model.start_window_right
-               << " (total " << (emission_model.start_window_left + emission_model.start_window_right) << " bp)\n";
         report << "CNN donor scale/bias: " << donor_cnn_scale << "/" << donor_cnn_bias
                << "  acceptor scale/bias: " << acceptor_cnn_scale << "/" << acceptor_cnn_bias << "\n";
         report << "Match window: +/-" << START_MATCH_WINDOW << " bp\n\n";
@@ -1332,35 +1534,140 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    cout << "\n=== Full Genome Holdout Validation ===\n";
-    cout << fixed << setprecision(4);
-    cout << left << setw(28) << "Metric" << right << setw(14) << "Value" << "\n";
-    cout << left << setw(28) << "Evaluated bases" << right << setw(14) << result.total_bases << "\n";
-    cout << left << setw(28) << "Exact 21-state accuracy" << right << setw(14) << divide(result.exact_matches, result.total_bases) << "\n";
-    cout << left << setw(28) << "Illegal transitions" << right << setw(14) << result.illegal_transitions << "\n";
-    cout << left << setw(28) << "Predicted gene intervals" << right << setw(14) << result.predicted_gene_intervals.size() << "\n";
-    cout << left << setw(28) << "Gold gene intervals" << right << setw(14) << result.gold_gene_intervals.size() << "\n";
-    cout << left << setw(28) << "Intron length cap (bp)" << right << setw(14) << max_intron_body_length << "\n";
-    cout << left << setw(28) << "Intron cap percentile" << right << setw(14) << intron_cap_percentile << "\n";
-    cout << left << setw(28) << "Intron length temperature" << right << setw(14) << intron_length_temperature << "\n";
-    cout << left << setw(28) << "Min intron body length" << right << setw(14) << gene_hmm::profile.min_intron_bp << "\n";
-    cout << left << setw(28) << "Gene start penalty" << right << setw(14) << gene_start_penalty << "\n";
-    cout << left << setw(28) << "CNN donor scale" << right << setw(14) << donor_cnn_scale << "\n";
-    cout << left << setw(28) << "CNN donor bias" << right << setw(14) << donor_cnn_bias << "\n";
-    cout << left << setw(28) << "CNN acceptor scale" << right << setw(14) << acceptor_cnn_scale << "\n";
-    cout << left << setw(28) << "CNN acceptor bias" << right << setw(14) << acceptor_cnn_bias << "\n";
+    auto all_paths_exist = [](const vector<string>& paths) {
+        for (const auto& path : paths) {
+            if (!filesystem::exists(path)) return false;
+        }
+        return !paths.empty();
+    };
 
-    cout << "\nClassification Metrics:\n";
-    print_binary_metrics_header();
-    print_binary_metrics_row("coding", result.coding_total);
-    print_binary_metrics_row("intron", result.intron_total);
+    bool minus_scores_present =
+        all_paths_exist(gene_hmm::profile.splice_cnn.test_score_minus_paths) &&
+        all_paths_exist(gene_hmm::profile.start_cnn.test_score_minus_paths);
 
-    cout << "\nBoundary Metrics:\n";
-    print_boundary_metrics_header();
-    print_boundary_metrics_row("start", result.start_exact, result.start_predicted, result.start_gold);
-    print_boundary_metrics_row("stop", result.stop_exact, result.stop_predicted, result.stop_gold);
-    print_boundary_metrics_row("donor", result.donor_exact, result.donor_predicted, result.donor_gold);
-    print_boundary_metrics_row("acceptor", result.acceptor_exact, result.acceptor_predicted, result.acceptor_gold);
+    bool dual_strand =
+        gene_hmm::profile.include_minus_strand &&
+        splice_cnn_scores_path.empty() &&
+        start_cnn_scores_path.empty() &&
+        minus_scores_present;
+
+    if (gene_hmm::profile.include_minus_strand && !minus_scores_present) {
+        cout << "\nNote: include_minus_strand is set but minus-strand CNN score files "
+                "were not found; running plus-strand only. Regenerate scores with the "
+                "minus score outputs (train_cached_model.py) to enable dual-strand decoding.\n";
+    }
+
+    Validation_Result final_result = result;
+    if (dual_strand) {
+        Sequence_Data eval_data_minus = load_evaluation_data_minus(gene_hmm::profile);
+        vector<Chromosome_Range> eval_ranges_minus =
+            split_usable_ranges(eval_data_minus.chromosomes, eval_data_minus.regions);
+
+        if (gene_hmm::profile.splice_cnn.test_score_minus_paths.size() != eval_data_minus.dataset_offsets.size() ||
+            gene_hmm::profile.start_cnn.test_score_minus_paths.size() != eval_data_minus.dataset_offsets.size()) {
+            cerr << "Profile minus-strand score path count does not match evaluation datasets.\n";
+            return 1;
+        }
+
+        Emission_Model emission_model_minus = emission_model;
+        emission_model_minus.load_splice_cnn_scores(
+            gene_hmm::profile.splice_cnn.test_score_minus_paths,
+            eval_data_minus.dataset_offsets,
+            eval_data_minus.nucleotides.size());
+        emission_model_minus.set_splice_cnn_calibration(
+            donor_cnn_scale, donor_cnn_bias, acceptor_cnn_scale, acceptor_cnn_bias);
+        emission_model_minus.load_start_cnn_scores(
+            gene_hmm::profile.start_cnn.test_score_minus_paths,
+            eval_data_minus.dataset_offsets,
+            eval_data_minus.nucleotides.size());
+        emission_model_minus.set_start_cnn_calibration(start_cnn_scale, start_cnn_bias);
+
+        Validation_Result minus_result;
+        try {
+            minus_result = decode_validation(
+                emission_model_minus,
+                transition_log_probs,
+                eval_data_minus,
+                eval_ranges_minus,
+                max_intron_body_length,
+                true);
+        } catch (const exception& e) {
+            cerr << e.what() << "\n";
+            return 1;
+        }
+
+        final_result = merge_validation_results(result, minus_result);
+
+        write_validation_report(cout, "Holdout Validation (+ strand)", result, max_intron_body_length);
+        write_validation_report(cout, "Holdout Validation (- strand)", minus_result, max_intron_body_length);
+        write_validation_report(
+            cout, "Full Genome Holdout Validation (both strands)", final_result, max_intron_body_length);
+    } else {
+        write_validation_report(cout, "Full Genome Holdout Validation", result, max_intron_body_length);
+    }
+
+    if (!results_dir.empty()) {
+        error_code ec;
+        filesystem::create_directories(results_dir, ec);
+        if (ec) {
+            cerr << "Could not create results directory: " << results_dir << " (" << ec.message() << ")\n";
+            return 1;
+        }
+
+        const string combined_path = results_dir + "/combined.txt";
+        ofstream combined_file(combined_path);
+        if (!combined_file) {
+            cerr << "Could not open results file: " << combined_path << "\n";
+            return 1;
+        }
+        write_validation_report(
+            combined_file, "Full Genome Holdout Validation (all tests combined)", final_result, max_intron_body_length);
+        cout << "\nSaved combined results to " << combined_path << "\n";
+
+        for (const auto& dataset : gene_hmm::profile.species) {
+            const string prefix = dataset.name + ":";
+            vector<Chromosome_Range> species_ranges;
+            for (const auto& range : eval_ranges) {
+                if (range.name.rfind(prefix, 0) == 0) {
+                    species_ranges.push_back(range);
+                }
+            }
+            if (species_ranges.empty()) {
+                continue;
+            }
+
+            Validation_Result species_result;
+            try {
+                species_result = decode_validation(
+                    emission_model,
+                    transition_log_probs,
+                    eval_data,
+                    species_ranges,
+                    max_intron_body_length,
+                    true);
+            } catch (const exception& e) {
+                cerr << e.what() << "\n";
+                return 1;
+            }
+
+            string chroms;
+            set<string> seen_chroms;
+            for (const auto& range : species_ranges) {
+                if (seen_chroms.insert(range.name).second) {
+                    if (!chroms.empty()) chroms += ",";
+                    chroms += range.name;
+                }
+            }
+            const string species_path = results_dir + "/" + dataset.name + ".txt";
+            ofstream species_file(species_path);
+            if (!species_file) {
+                cerr << "Could not open results file: " << species_path << "\n";
+                return 1;
+            }
+            write_validation_report(species_file, "Test: " + chroms, species_result, max_intron_body_length);
+            cout << "Saved " << dataset.name << " results to " << species_path << "\n";
+        }
+    }
 
     return 0;
 }

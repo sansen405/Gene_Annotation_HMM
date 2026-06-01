@@ -104,9 +104,6 @@ namespace gene_hmm {
 
         if (T == 0) return {};
 
-        // When a length distribution is supplied, introns are modeled as
-        // semi-Markov segments: drop the per-step geometric self-loop cost and
-        // charge log P(length) once when the body closes into an acceptor.
         const bool use_length_model = !intron_length_log_prob.empty();
         auto length_log_prob = [&](size_t length) -> Log_Prob {
             if (intron_length_log_prob.empty()) {
@@ -204,5 +201,27 @@ namespace gene_hmm {
             curr_state = genome_annotation[t-1];
         }
         return genome_annotation;
+    }
+
+    Log_Prob Viterbi::path_log_prob(
+        const vector<State>& states,
+        const vector<Nucleotide>& nucleotides,
+        const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+        const Emission_Model& emission_model,
+        Log_Prob gene_start_penalty,
+        size_t start,
+        size_t end)
+    {
+        Log_Prob total = 0.0;
+        for(size_t t = start; t < end && t < states.size(); t++){
+            total += emission_model.emission_log_prob(states[t], t, nucleotides);
+            if(t == 0){
+                total += transition_log_probs[idx(State::START)][idx(states[t])];
+            } else {
+                total += transition_log_probs[idx(states[t - 1])][idx(states[t])];
+                total -= gene_entry_penalty(states[t - 1], states[t], gene_start_penalty);
+            }
+        }
+        return total;
     }
 }
