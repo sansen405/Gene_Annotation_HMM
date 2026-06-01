@@ -170,6 +170,12 @@ Vite serves the UI (usually `http://localhost:5173/`); the API listens on
 
 ## Version history
 
+- **4.2** — intron body emission upgraded from Markov order-1 to Markov order-5
+  (1024-context table), matching the exon model. Gives the HMM body real content
+  discrimination so borderline CNN splice scores can flip into accepted introns:
+  on dual-strand evaluation, intron F1 0.8169 -> 0.8413, intron recall
+  0.7304 -> 0.7735, donor/acceptor recall ~0.80 -> ~0.85, with intron precision
+  held essentially flat (0.9267 -> 0.9221).
 - **4.1** — dual-strand decoding: minus-strand transcripts are scored in
   reverse-complement coordinates and merged with plus-strand genes by Viterbi
   path log-probability.

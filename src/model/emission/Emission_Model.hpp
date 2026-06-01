@@ -16,7 +16,7 @@ namespace gene_hmm {
     enum class Emission_Type {
         SILENT,
         MARKOV1_INTERGENIC,
-        MARKOV1_INTRON,
+        MARKOV5_INTRON,
         MARKOV5_EXON,
         CNN_DONOR,
         CNN_ACCEPTOR,
@@ -40,7 +40,7 @@ namespace gene_hmm {
         using Frame_Markov5_Log_Prob = array<Markov5_Log_Prob, 3>;
 
         Markov1_Log_Prob intergenic_lp{};
-        Markov1_Log_Prob intron_lp{};
+        Markov5_Log_Prob intron_lp{};
         Frame_Markov5_Log_Prob exon_frame_lp{};
 
         static const unordered_map<State, Emission_Type> State_To_Emission_Type;
