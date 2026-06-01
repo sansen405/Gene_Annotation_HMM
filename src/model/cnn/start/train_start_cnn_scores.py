@@ -8,11 +8,9 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    import torch
-    from start_cnn_network import StartCNN
+import torch
+from start_cnn_network import StartCNN, one_hot_encode_windows
 
 
 @dataclass(frozen=True)

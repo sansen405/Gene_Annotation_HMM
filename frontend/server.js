@@ -17,8 +17,12 @@ const uploadDir = path.join(localDataDir, "uploads");
 const scoresDir = path.join(localDataDir, "splice_scores");
 const binDir = path.join(localDataDir, "bin");
 const predictorBin = path.join(binDir, "hmm_predict_fna");
-const profilePath = path.join(repoRoot, "src/genome_profiles/fission_yeasts.json");
-const scoreFastaScript = path.join(repoRoot, "src/model/cnn/score_fasta.py");
+const profilePath = path.join(
+  repoRoot,
+  "src/genome_profiles/fission_yeasts/fission_yeasts.json"
+);
+const scoreSpliceScript = path.join(repoRoot, "src/model/cnn/score_fasta.py");
+const scoreStartScript = path.join(repoRoot, "src/model/cnn/score_start_fasta.py");
 const trainCachedModelScript = path.join(
   repoRoot,
   "src/model/training_pipeline/train_cached_model.py"
@@ -95,7 +99,8 @@ async function ensurePredictorBuilt() {
     "src/parsers/FNA_Parser.cpp",
     "src/parsers/GFF_Parser.cpp",
     "src/model/emission/Emission_Model.cpp",
-    "src/model/cnn/Splice_CNN_Scores.cpp",
+    "src/model/cnn/splice/Splice_CNN_Scores.cpp",
+    "src/model/cnn/start/Start_CNN_Scores.cpp",
   ].map((source) => path.join(repoRoot, source));
 
   if (fs.existsSync(predictorBin)) {
@@ -120,7 +125,8 @@ async function ensurePredictorBuilt() {
       "src/parsers/FNA_Parser.cpp",
       "src/parsers/GFF_Parser.cpp",
       "src/model/emission/Emission_Model.cpp",
-      "src/model/cnn/Splice_CNN_Scores.cpp",
+      "src/model/cnn/splice/Splice_CNN_Scores.cpp",
+      "src/model/cnn/start/Start_CNN_Scores.cpp",
       "-o",
       predictorBin,
     ],
@@ -128,39 +134,63 @@ async function ensurePredictorBuilt() {
   );
 }
 
-function cnnModelPath() {
-  const profile = JSON.parse(fs.readFileSync(profilePath, "utf8"));
-  return path.join(repoRoot, profile.splice_cnn.model);
+function readProfile() {
+  return JSON.parse(fs.readFileSync(profilePath, "utf8"));
 }
 
-async function ensureCnnModel() {
-  const modelPath = cnnModelPath();
-  if (fs.existsSync(modelPath)) {
-    return modelPath;
+function spliceModelPath() {
+  return path.join(repoRoot, readProfile().splice_cnn.model);
+}
+
+function startModelPath() {
+  return path.join(repoRoot, readProfile().start_cnn.model);
+}
+
+async function ensureCnnModels() {
+  const splicePath = spliceModelPath();
+  const startPath = startModelPath();
+  if (fs.existsSync(splicePath) && fs.existsSync(startPath)) {
+    return;
   }
 
-  console.log("CNN checkpoint missing; training cached fission-yeast splice model (first run only)...");
+  console.log("CNN checkpoints missing; training cached fission-yeast models (first run only)...");
   await execFilePromise(
     pythonBin,
     [trainCachedModelScript, "--profile", profilePath, "--skip-compile"],
     { cwd: repoRoot, maxBuffer: 1024 * 1024 * 64 }
   );
-  if (!fs.existsSync(modelPath)) {
-    throw new Error(`CNN checkpoint was not created at ${modelPath}`);
+  if (!fs.existsSync(splicePath) || !fs.existsSync(startPath)) {
+    throw new Error("CNN checkpoints were not created. Check train_cached_model.py output.");
   }
-  return modelPath;
 }
 
 async function ensureSpliceScores(fastaPath, scoresPath) {
-  await ensureCnnModel();
+  await ensureCnnModels();
   await execFilePromise(
     pythonBin,
     [
-      scoreFastaScript,
+      scoreSpliceScript,
       "--fasta",
       fastaPath,
       "--model",
-      cnnModelPath(),
+      spliceModelPath(),
+      "--scores-out",
+      scoresPath,
+    ],
+    { cwd: repoRoot, maxBuffer: 1024 * 1024 * 64 }
+  );
+}
+
+async function ensureStartScores(fastaPath, scoresPath) {
+  await ensureCnnModels();
+  await execFilePromise(
+    pythonBin,
+    [
+      scoreStartScript,
+      "--fasta",
+      fastaPath,
+      "--model",
+      startModelPath(),
       "--scores-out",
       scoresPath,
     ],
@@ -393,7 +423,8 @@ async function executeProjectRun(projectId, inputRelPath) {
   const runDir = resolveProjectPath(projectId, path.join("runs", runId));
   fs.mkdirSync(runDir, { recursive: true });
 
-  const scoresPath = path.join(runDir, "splice_scores.tsv");
+  const spliceScoresPath = path.join(runDir, "splice_scores.tsv");
+  const startScoresPath = path.join(runDir, "start_scores.tsv");
   const statusPath = path.join(runDir, "status.json");
   const started = Date.now();
 
@@ -404,10 +435,20 @@ async function executeProjectRun(projectId, inputRelPath) {
 
   try {
     await ensurePredictorBuilt();
-    await ensureSpliceScores(inputPath, scoresPath);
+    await ensureSpliceScores(inputPath, spliceScoresPath);
+    await ensureStartScores(inputPath, startScoresPath);
     const { stdout } = await execFilePromise(
       predictorBin,
-      ["--fna", inputPath, "--profile", profilePath, "--splice-cnn-scores", scoresPath],
+      [
+        "--fna",
+        inputPath,
+        "--profile",
+        profilePath,
+        "--splice-cnn-scores",
+        spliceScoresPath,
+        "--start-cnn-scores",
+        startScoresPath,
+      ],
       { cwd: repoRoot }
     );
     const predictionResult = JSON.parse(stdout);

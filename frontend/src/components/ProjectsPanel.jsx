@@ -1,6 +1,6 @@
 import { ArrowRight, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { TrackMotif } from "./TrackMotif.jsx";
+import { DnaStrand } from "./DnaStrand.jsx";
 import { premiumEase } from "../lib/motion.js";
 
 function formatDate(value) {
@@ -24,14 +24,14 @@ export function ProjectsPanel({
 }) {
   return (
     <>
-      <section className="workspace-folder workspace-folder--picker">
-        <header className="workspace-masthead">
-          <TrackMotif className="workspace-motif" />
-          <div className="workspace-masthead-row">
-            <div className="workspace-masthead-copy">
-              <p className="home-kicker">Workspaces</p>
-              <h1 className="workspace-title">Projects</h1>
-              <p className="workspace-lead">
+      <main className="projects-page">
+        <header className="projects-page-head">
+          <DnaStrand className="projects-page-helix" />
+          <p className="home-kicker">Workspaces</p>
+          <div className="projects-page-title-row">
+            <div className="projects-page-copy">
+              <h1>Projects</h1>
+              <p className="projects-page-lead">
                 Choose a project, upload your files, then pick a tool to run analysis.
               </p>
             </div>
@@ -40,47 +40,49 @@ export function ProjectsPanel({
               New project
             </button>
           </div>
+          {projects.length > 0 && (
+            <p className="projects-page-count">
+              {projects.length} workspace{projects.length === 1 ? "" : "s"}
+            </p>
+          )}
         </header>
 
-        <div className="workspace-assets">
+        <div className="projects-page-body">
           {errorMessage && <p className="page-error">{errorMessage}</p>}
 
           {projects.length === 0 ? (
-            <div className="workspace-empty">
+            <div className="projects-empty">
               <p>No projects yet</p>
-              <span>Create a workspace to upload sequence files and run the HMM decoder.</span>
+              <span>Create a workspace to upload sequence files and run gene annotation.</span>
               <button className="auremin-button" onClick={onOpenCreate} type="button">
                 Create your first project
                 <ArrowRight size={16} />
               </button>
             </div>
           ) : (
-            <ul className="project-list project-list--workspace">
+            <ul className="projects-list">
               {projects.map((project) => (
                 <li key={project.id}>
                   <button
-                    className="project-row"
+                    className="projects-card"
                     onClick={() => onOpenProject(project.id)}
                     type="button"
                   >
-                    <TrackMotif className="project-row-motif" />
-                    <div className="project-row-body">
-                      <div className="project-row-main">
-                        <strong>{project.name}</strong>
-                        <span>
-                          {project.runCount ?? 0} run{(project.runCount ?? 0) === 1 ? "" : "s"} ·{" "}
-                          {formatDate(project.updatedAt)}
-                        </span>
-                      </div>
-                      <ArrowRight size={18} />
+                    <div className="projects-card-main">
+                      <strong>{project.name}</strong>
+                      <span>
+                        {project.runCount ?? 0} run{(project.runCount ?? 0) === 1 ? "" : "s"} ·{" "}
+                        {formatDate(project.updatedAt)}
+                      </span>
                     </div>
+                    <ArrowRight size={18} />
                   </button>
                 </li>
               ))}
             </ul>
           )}
         </div>
-      </section>
+      </main>
 
       {creatingProject && (
         <div className="modal-backdrop">

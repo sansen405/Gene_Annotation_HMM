@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
-import { TrackMotif } from "./TrackMotif.jsx";
+import { DnaStrand } from "./DnaStrand.jsx";
 import { fadeIn, lineReveal, premiumEase, staggerContainer } from "../lib/motion.js";
 
 function HeroTitle({ lines }) {
@@ -43,16 +43,17 @@ export function LandingScreen({ onEnter, projectCount = 0 }) {
   return (
     <main className="landing-page">
       <div className="landing-backdrop" aria-hidden="true">
-        <TrackMotif className="landing-backdrop-motif" />
+        <DnaStrand className="landing-backdrop-helix" />
       </div>
 
       <div className="landing-content">
         <motion.div
           animate={reduceMotion ? undefined : "visible"}
+          className="landing-helix-mark"
           initial={reduceMotion ? undefined : "hidden"}
           variants={fadeIn}
         >
-          <TrackMotif className="landing-motif" />
+          <DnaStrand className="landing-helix-icon" />
         </motion.div>
 
         <motion.p

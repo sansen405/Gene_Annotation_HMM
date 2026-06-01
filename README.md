@@ -153,11 +153,12 @@ clang++ -std=c++17 -Isrc -I/opt/homebrew/include \
 
 ## Frontend
 
-`frontend/` is a local React UI plus a Node API that accepts FASTA uploads, runs
-the C++ predictor locally, and keeps runs in memory for the browser session
-(no cloud storage). It supports multi-file upload, a genome track view with
-per-base Forward-Backward confidence, a searchable gene table, and GFF3/CSV/BED/
-FASTA export.
+`frontend/` is a local React UI plus a Node API. Create projects, upload FASTA
+files, run gene annotation (HMM + CNN), and inspect results on an interactive
+genome track. Exports: GFF3, CSV, BED, FASTA.
+
+**Requirements:** Node.js 18+, `clang++`, Python 3 with PyTorch, and
+`nlohmann-json` (`brew install nlohmann-json` on macOS).
 
 ```sh
 cd frontend
@@ -165,8 +166,8 @@ npm install
 npm run dev:all
 ```
 
-Vite serves the UI (usually `http://localhost:5173/`); the API listens on
-`http://localhost:5174/`.
+Open `http://localhost:5173/` (UI) — the API runs on `http://localhost:5174/`.
+First prediction compiles the C++ predictor and may take a minute.
 
 ## Version history
 

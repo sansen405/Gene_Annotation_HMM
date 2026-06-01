@@ -172,18 +172,22 @@ function App() {
     event.preventDefault();
     const name = newProjectName.trim();
     if (!name) return;
-    const project = await apiFetch("/api/projects", {
-      body: JSON.stringify({ name }),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-    });
-    setProjects((existing) => [project, ...existing]);
-    setNewProjectName("");
-    setCreatingProject(false);
-    setActiveProjectId(project.id);
-    setSelectedPath("inputs");
-    setSelectedRun(null);
-    setErrorMessage("");
+    try {
+      const project = await apiFetch("/api/projects", {
+        body: JSON.stringify({ name }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      setProjects((existing) => [project, ...existing]);
+      setNewProjectName("");
+      setCreatingProject(false);
+      setActiveProjectId(project.id);
+      setSelectedPath("inputs");
+      setSelectedRun(null);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   }
 
   function openProject(projectId) {
@@ -314,24 +318,20 @@ function App() {
 
   if (!activeProjectId) {
     return (
-      <div className="app-root workspace-root">
+      <div className="app-root app-root--projects">
         <TopBar onHome={handleBrandHome} />
 
-        <div className="app-shell app-shell--picker">
-          <main className="content project-content project-content--picker">
-            <ProjectsPanel
-              creatingProject={creatingProject}
-              errorMessage={errorMessage}
-              newProjectName={newProjectName}
-              onCreateProject={handleCreateProject}
-              onOpenCreate={() => setCreatingProject(true)}
-              onOpenProject={openProject}
-              onSetCreatingProject={setCreatingProject}
-              onSetNewProjectName={setNewProjectName}
-              projects={projects}
-            />
-          </main>
-        </div>
+        <ProjectsPanel
+          creatingProject={creatingProject}
+          errorMessage={errorMessage}
+          newProjectName={newProjectName}
+          onCreateProject={handleCreateProject}
+          onOpenCreate={() => setCreatingProject(true)}
+          onOpenProject={openProject}
+          onSetCreatingProject={setCreatingProject}
+          onSetNewProjectName={setNewProjectName}
+          projects={projects}
+        />
       </div>
     );
   }
