@@ -1,0 +1,30 @@
+=== Intron-length-cap diagnostic ===
+Profile: fission_yeasts
+Species: 4
+
+Train intron bodies (define the cap): 6590
+Test  intron bodies (gold, held out): 3930
+
+Train intron-body length percentiles (bp):
+  p50=53  p90=143  p95=196  p99=319  p99.9=526  max=2446
+Test  intron-body length percentiles (bp):
+  p50=53  p90=143  p95=199  p99=340  p99.9=645  max=766
+
+Current cap = train p95.0000 = 196 bp
+
+Test gold introns longer than the cap: 205 / 3930  (5.2163%)
+==> Intron-recall CEILING imposed by the cap: 94.7837%
+
+Recall ceiling under alternative caps (from train distribution):
+cap source    cap(bp)   test over-cap   recall ceiling  
+train p95     196       205             94.7837         
+train p99     319       52              98.6768         
+train p99.9   526       8               99.7964         
+train max     2446      0               100.0000        
+
+Per-species test intron bodies over the current cap (196 bp):
+species             introns   over-cap    over-cap %    test max    
+s_pombe             1067      69          6.4667        754         
+s_japonicus         1029      41          3.9845        573         
+s_octosporus        1137      64          5.6288        677         
+s_cryophilus        697       31          4.4476        766         

@@ -1,0 +1,50 @@
+=== Intron-length-cap diagnostic ===
+Profile: fungi_diverse
+Species: 24
+
+Train intron bodies (define the cap): 222411
+Test  intron bodies (gold, held out): 32217
+
+Train intron-body length percentiles (bp):
+  p50=60  p90=149  p95=232  p99=504  p99.9=1068  max=28631
+Test  intron-body length percentiles (bp):
+  p50=61  p90=157  p95=238  p99=515  p99.9=1141  max=8628
+
+Current cap = train p95.0000 = 232 bp
+
+Test gold introns longer than the cap: 1671 / 32217  (5.1867%)
+==> Intron-recall CEILING imposed by the cap: 94.8133%
+
+Recall ceiling under alternative caps (from train distribution):
+cap source    cap(bp)   test over-cap   recall ceiling  
+train p95     232       1671            94.8133         
+train p99     504       344             98.9322         
+train p99.9   1068      39              99.8789         
+train max     28631     0               100.0000        
+
+Per-species test intron bodies over the current cap (232 bp):
+species             introns   over-cap    over-cap %    test max    
+s_cerevisiae        20        14          70.0000       764         
+c_albicans          35        7           20.0000       1061        
+k_lactis            16        9           56.2500       1234        
+y_lipolytica        199       52          26.1307       1822        
+d_hansenii          32        6           18.7500       436         
+k_phaffii           53        2           3.7736        282         
+e_gossypii          26        2           7.6923        301         
+n_crassa            753       51          6.7729        985         
+a_nidulans          1399      75          5.3610        973         
+a_fumigatus         1356      21          1.5487        910         
+f_graminearum       2701      127         4.7020        797         
+p_oryzae            2089      186         8.9038        1763        
+b_cinerea           1208      39          3.2285        1606        
+s_sclerotiorum      1345      224         16.6543       706         
+t_reesei            1104      78          7.0652        8628        
+z_tritici           1199      148         12.3436       4538        
+c_higginsianum      2511      109         4.3409        1141        
+cr_neoformans       2043      15          0.7342        1059        
+u_maydis            174       22          12.6437       1258        
+co_cinerea          3528      90          2.5510        966         
+p_graminis          3097      96          3.0998        1698        
+sc_commune          3914      163         4.1645        6642        
+r_delemar           2078      41          1.9731        692         
+b_dendrobatidis     1337      94          7.0307        1835        

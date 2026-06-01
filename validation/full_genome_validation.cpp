@@ -372,18 +372,39 @@ size_t percentile_length(vector<size_t> lengths, double percentile) {
 
 vector<Log_Prob> build_intron_length_log_probs(
     const vector<size_t>& lengths,
-    size_t max_length)
+    size_t empirical_max)
 {
-    if (max_length == 0 || lengths.empty()) {
+    if (empirical_max == 0 || lengths.empty()) {
         return {};
     }
 
-    vector<double> counts(max_length + 1, 1.0);
-    counts[0] = 0.0;
+    // Append a geometric tail beyond the empirical range so over-length introns
+    // are penalized rather than forbidden. The decay matches a geometric
+    // distribution with the observed mean intron length, extended until the
+    // tail mass is negligible.
+    double mean_length = 0.0;
     for (size_t length : lengths) {
-        if (length >= 1 && length <= max_length) {
+        mean_length += static_cast<double>(length);
+    }
+    mean_length /= static_cast<double>(lengths.size());
+    double tail_decay = (mean_length > 1.0) ? (1.0 - 1.0 / mean_length) : 0.5;
+    size_t tail_span = static_cast<size_t>(ceil(log(1e-6) / log(tail_decay)));
+    size_t max_length = empirical_max + tail_span;
+
+    vector<double> counts(max_length + 1, 0.0);
+    for (size_t length = 1; length <= empirical_max; ++length) {
+        counts[length] = 1.0;
+    }
+    for (size_t length : lengths) {
+        if (length >= 1 && length <= empirical_max) {
             counts[length] += 1.0;
         }
+    }
+
+    double tail_mass = counts[empirical_max];
+    for (size_t length = empirical_max + 1; length <= max_length; ++length) {
+        tail_mass *= tail_decay;
+        counts[length] = tail_mass;
     }
 
     double total = 0.0;
@@ -1283,7 +1304,7 @@ void write_validation_report(
     out << left << setw(28) << "Illegal transitions" << right << setw(14) << result.illegal_transitions << "\n";
     out << left << setw(28) << "Predicted gene intervals" << right << setw(14) << result.predicted_gene_intervals.size() << "\n";
     out << left << setw(28) << "Gold gene intervals" << right << setw(14) << result.gold_gene_intervals.size() << "\n";
-    out << left << setw(28) << "Intron length cap p95" << right << setw(14) << max_intron_body_length << "\n";
+    out << left << setw(28) << "Intron length cap" << right << setw(14) << max_intron_body_length << "\n";
     out << left << setw(28) << "Gene start penalty" << right << setw(14) << gene_start_penalty << "\n";
     out << left << setw(28) << "CNN donor scale" << right << setw(14) << donor_cnn_scale << "\n";
     out << left << setw(28) << "CNN donor bias" << right << setw(14) << donor_cnn_bias << "\n";
@@ -1389,8 +1410,11 @@ int main(int argc, char** argv) {
     emission_model.set_start_cnn_calibration(start_cnn_scale, start_cnn_bias);
 
     vector<size_t> train_intron_body_lengths = collect_intron_body_lengths(train_data.states, train_ranges);
-    size_t max_intron_body_length = percentile_length(train_intron_body_lengths, 0.95);
-    intron_length_log_probs = build_intron_length_log_probs(train_intron_body_lengths, max_intron_body_length);
+    size_t empirical_intron_cap = percentile_length(train_intron_body_lengths, 0.999);
+    intron_length_log_probs = build_intron_length_log_probs(train_intron_body_lengths, empirical_intron_cap);
+    size_t max_intron_body_length = intron_length_log_probs.empty()
+        ? numeric_limits<size_t>::max()
+        : intron_length_log_probs.size() - 1;
 
     if (tune_start_calibration) {
         const auto& splice_train_paths = gene_hmm::profile.splice_cnn.train_score_paths;
