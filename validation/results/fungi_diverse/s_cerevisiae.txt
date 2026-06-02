@@ -1,0 +1,28 @@
+
+=== Test: s_cerevisiae:NC_001136.10,s_cerevisiae:NC_001147.6 ===
+Metric                               Value
+Evaluated bases                    1667902
+Exact 21-state accuracy             0.7373
+Illegal transitions                      0
+Predicted gene intervals               418
+Gold gene intervals                    652
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9945      0.5568      0.7139      0.7433    534167      2929    425152    705654
+intron            0.0815      0.0843      0.0829      0.9927       551      6209      5984   1655158
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.6483      0.4156         271         418         652
+stop              0.8612      0.5521         360         418         652
+donor             0.0161      0.0500           1          62          20
+acceptor          0.0645      0.2000           4          62          20

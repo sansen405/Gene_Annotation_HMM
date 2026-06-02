@@ -1,0 +1,28 @@
+
+=== Test: k_lactis:NC_006041.1 ===
+Metric                               Value
+Evaluated bases                    1416777
+Exact 21-state accuracy             0.8611
+Illegal transitions                      0
+Predicted gene intervals               429
+Gold gene intervals                    532
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9907      0.7539      0.8562      0.8663    564075      5274    184143    663285
+intron            0.2181      0.1598      0.1845      0.9941       943      3381      4957   1407496
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.7506      0.6053         322         429         532
+stop              0.9138      0.7368         392         429         532
+donor             0.1190      0.3125           5          42          16
+acceptor          0.1190      0.3125           5          42          16

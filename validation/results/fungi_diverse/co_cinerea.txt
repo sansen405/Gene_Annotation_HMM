@@ -1,0 +1,28 @@
+
+=== Test: co_cinerea:NW_003307543.1,co_cinerea:NW_003307481.1,co_cinerea:NW_003307485.1,co_cinerea:NW_003307492.1,co_cinerea:NW_003307499.1,co_cinerea:NW_003307521.1,co_cinerea:NW_003307527.1,co_cinerea:NW_003307531.1 ===
+Metric                               Value
+Evaluated bases                    2548131
+Exact 21-state accuracy             0.8562
+Illegal transitions                      0
+Predicted gene intervals              1206
+Gold gene intervals                    746
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.8046      0.9483      0.8705      0.8891    949950    230757     51810   1315614
+intron            0.8608      0.6677      0.7521      0.9570    166258     26889     82731   2272253
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.4362      0.7051         526        1206         746
+stop              0.4934      0.7976         595        1206         746
+donor             0.8728      0.7174        2531        2900        3528
+acceptor          0.8569      0.7044        2485        2900        3528

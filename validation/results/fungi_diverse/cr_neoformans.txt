@@ -1,0 +1,28 @@
+
+=== Test: cr_neoformans:NC_026748.1,cr_neoformans:NC_026754.1 ===
+Metric                               Value
+Evaluated bases                    1437226
+Exact 21-state accuracy             0.9004
+Illegal transitions                      0
+Predicted gene intervals               545
+Gold gene intervals                    393
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.8769      0.9522      0.9130      0.9236    576536     80956     28915    750819
+intron            0.8660      0.7986      0.8309      0.9706    103708     16042     26158   1291318
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.5486      0.7608         299         545         393
+stop              0.6073      0.8422         331         545         393
+donor             0.9097      0.7744        1582        1739        2043
+acceptor          0.9120      0.7763        1586        1739        2043

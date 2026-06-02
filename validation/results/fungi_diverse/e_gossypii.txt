@@ -1,0 +1,28 @@
+
+=== Test: e_gossypii:NC_005783.5,e_gossypii:NC_005784.3 ===
+Metric                               Value
+Evaluated bases                    1014533
+Exact 21-state accuracy             0.9625
+Illegal transitions                      0
+Predicted gene intervals               503
+Gold gene intervals                    448
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9708      0.9761      0.9734      0.9651    649304     19546     15889    329794
+intron            0.3812      0.5781      0.4595      0.9968      1369      2222       999   1009943
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.7097      0.7969         357         503         448
+stop              0.8449      0.9487         425         503         448
+donor             0.3600      0.6923          18          50          26
+acceptor          0.3600      0.6923          18          50          26

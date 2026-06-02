@@ -1,0 +1,28 @@
+
+=== Test: b_cinerea:NC_037319.1,b_cinerea:NC_037321.1 ===
+Metric                               Value
+Evaluated bases                    3667419
+Exact 21-state accuracy             0.9479
+Illegal transitions                      0
+Predicted gene intervals               879
+Gold gene intervals                    646
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9198      0.9436      0.9316      0.9611    969983     84523     57976   2554937
+intron            0.7247      0.6931      0.7085      0.9847     68350     25970     30263   3542836
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.5711      0.7771         502         879         646
+stop              0.6473      0.8808         569         879         646
+donor             0.8239      0.7572         917        1113        1211
+acceptor          0.8185      0.7523         911        1113        1211

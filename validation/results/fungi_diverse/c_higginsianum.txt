@@ -1,0 +1,28 @@
+
+=== Test: c_higginsianum:NC_030954.1,c_higginsianum:NC_030961.1 ===
+Metric                               Value
+Evaluated bases                    7692036
+Exact 21-state accuracy             0.8343
+Illegal transitions                      0
+Predicted gene intervals              4004
+Gold gene intervals                   1417
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.6481      0.9850      0.7818      0.8583   1953447   1060587     29709   4648293
+intron            0.5300      0.7502      0.6211      0.9732    169026    149918     56289   7316803
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.2685      0.7586        1075        4004        1417
+stop              0.3202      0.9047        1282        4004        1417
+donor             0.5996      0.8307        2031        3387        2445
+acceptor          0.5872      0.8135        1989        3387        2445

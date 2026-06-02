@@ -1,0 +1,28 @@
+
+=== Test: a_fumigatus:NC_007199.1 ===
+Metric                               Value
+Evaluated bases                    2712445
+Exact 21-state accuracy             0.9510
+Illegal transitions                      0
+Predicted gene intervals               873
+Gold gene intervals                    632
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9208      0.9724      0.9459      0.9618    905382     77874     25719   1703470
+intron            0.8447      0.7617      0.8011      0.9862     75254     13833     23538   2599820
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.5853      0.8085         511         873         632
+stop              0.6449      0.8908         563         873         632
+donor             0.8632      0.7910        1060        1228        1340
+acceptor          0.8607      0.7888        1057        1228        1340

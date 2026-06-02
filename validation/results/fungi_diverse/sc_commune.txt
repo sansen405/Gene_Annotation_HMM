@@ -1,0 +1,28 @@
+
+=== Test: sc_commune:NW_026089544.1,sc_commune:NW_026089548.1,sc_commune:NW_026089555.1,sc_commune:NW_026089556.1,sc_commune:NW_026089559.1 ===
+Metric                               Value
+Evaluated bases                    3332720
+Exact 21-state accuracy             0.7549
+Illegal transitions                      0
+Predicted gene intervals              2080
+Gold gene intervals                    956
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.6506      0.9685      0.7783      0.7996   1172894    629866     38164   1491796
+intron            0.7227      0.6637      0.6919      0.9429    213771     82026    108323   2928600
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.2755      0.5994         573        2080         956
+stop              0.3288      0.7155         684        2080         956
+donor             0.7405      0.7390        2888        3900        3908
+acceptor          0.7308      0.7293        2850        3900        3908

@@ -1,0 +1,28 @@
+
+=== Test: s_sclerotiorum:NW_001820821.1,s_sclerotiorum:NW_001820835.1 ===
+Metric                               Value
+Evaluated bases                    2957810
+Exact 21-state accuracy             0.9085
+Illegal transitions                      0
+Predicted gene intervals               683
+Gold gene intervals                    775
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9269      0.8703      0.8977      0.9466    693222     54654    103350   2106584
+intron            0.8529      0.3413      0.4875      0.9557     62345     10755    120320   2764390
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.6252      0.5510         427         683         775
+stop              0.6823      0.6013         466         683         775
+donor             0.8189      0.5480         737         900        1345
+acceptor          0.8056      0.5390         725         900        1345

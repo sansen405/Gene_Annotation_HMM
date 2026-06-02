@@ -1,0 +1,28 @@
+
+=== Test: z_tritici:NC_018211.1,z_tritici:NC_018209.1,z_tritici:NC_018206.1,z_tritici:NC_018200.1 ===
+Metric                               Value
+Evaluated bases                    4665199
+Exact 21-state accuracy             0.7956
+Illegal transitions                      0
+Predicted gene intervals              2534
+Gold gene intervals                    811
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.5600      0.9839      0.7137      0.8210   1040934    818007     17016   2789242
+intron            0.4918      0.3537      0.4115      0.9653     56595     58491    103404   4446709
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.1910      0.5968         484        2534         811
+stop              0.2368      0.7398         600        2534         811
+donor             0.5176      0.6274         751        1451        1197
+acceptor          0.5072      0.6149         736        1451        1197

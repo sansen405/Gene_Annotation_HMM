@@ -1,0 +1,28 @@
+
+=== Test: f_graminearum:NC_026477.1 ===
+Metric                               Value
+Evaluated bases                    5826083
+Exact 21-state accuracy             0.9340
+Illegal transitions                      0
+Predicted gene intervals              1799
+Gold gene intervals                   1390
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.8904      0.9703      0.9286      0.9510   1859117    228787     56956   3681223
+intron            0.8073      0.5727      0.6701      0.9781    129867     31001     96880   5568335
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.5809      0.7518        1045        1799        1390
+stop              0.6431      0.8324        1157        1799        1390
+donor             0.8213      0.7234        1935        2356        2675
+acceptor          0.7916      0.6972        1865        2356        2675

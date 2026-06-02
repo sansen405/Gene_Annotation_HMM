@@ -1,0 +1,28 @@
+
+=== Test: u_maydis:NC_026482.1,u_maydis:NC_026488.1,u_maydis:NW_011929458.1 ===
+Metric                               Value
+Evaluated bases                    1417864
+Exact 21-state accuracy             0.9269
+Illegal transitions                      0
+Predicted gene intervals               576
+Gold gene intervals                    355
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.8874      0.9917      0.9367      0.9412    616364     78175      5143    718182
+intron            0.5821      0.4922      0.5334      0.9835     13403      9624     13829   1381008
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.5017      0.8141         289         576         355
+stop              0.5747      0.9324         331         576         355
+donor             0.5288      0.6322         110         208         174
+acceptor          0.5048      0.6034         105         208         174

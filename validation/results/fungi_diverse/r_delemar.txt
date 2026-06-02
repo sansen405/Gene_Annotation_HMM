@@ -1,0 +1,28 @@
+
+=== Test: r_delemar:NW_027137853.1,r_delemar:NW_027137852.1,r_delemar:NW_027137844.1,r_delemar:NW_027137841.1,r_delemar:NW_027137839.1,r_delemar:NW_027137838.1,r_delemar:NW_027137904.1,r_delemar:NW_027137895.1,r_delemar:NW_027137894.1,r_delemar:NW_027137891.1,r_delemar:NW_027137881.1,r_delemar:NW_027137870.1,r_delemar:NW_027137862.1,r_delemar:NW_027137859.1,r_delemar:NW_027137856.1 ===
+Metric                               Value
+Evaluated bases                    4026964
+Exact 21-state accuracy             0.8788
+Illegal transitions                      0
+Predicted gene intervals               826
+Gold gene intervals                    909
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.8941      0.7101      0.7916      0.9120    673139     79726    274747   2999352
+intron            0.5862      0.3543      0.4416      0.9631     58805     41510    107177   3819472
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.4262      0.3872         352         826         909
+stop              0.4891      0.4444         404         826         909
+donor             0.6846      0.3989         829        1211        2078
+acceptor          0.6606      0.3850         800        1211        2078

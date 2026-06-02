@@ -1,0 +1,28 @@
+
+=== Test: p_oryzae:NC_017852.1,p_oryzae:NC_017854.1,p_oryzae:NW_003803359.1,p_oryzae:NW_003803353.1,p_oryzae:NW_003803320.1,p_oryzae:NW_003803317.1,p_oryzae:NW_003803316.1 ===
+Metric                               Value
+Evaluated bases                    6048372
+Exact 21-state accuracy             0.9037
+Illegal transitions                      0
+Predicted gene intervals              1896
+Gold gene intervals                   1240
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.8041      0.9573      0.8741      0.9261   1550704    377756     69098   4050814
+intron            0.7998      0.5354      0.6414      0.9747    136963     34274    118852   5758283
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.4921      0.7536         933        1896        1238
+stop              0.5243      0.8029         994        1896        1238
+donor             0.7944      0.6769        1414        1780        2089
+acceptor          0.7708      0.6568        1372        1780        2089

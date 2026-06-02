@@ -1,0 +1,28 @@
+
+=== Test: p_graminis:NW_003526736.1,p_graminis:NW_003526727.1,p_graminis:NW_003526721.1,p_graminis:NW_003526717.1,p_graminis:NW_003526712.1,p_graminis:NW_003526710.1,p_graminis:NW_003526703.1,p_graminis:NW_003526695.1,p_graminis:NW_003526690.1,p_graminis:NW_003526689.1,p_graminis:NW_003526678.1,p_graminis:NW_003526671.1,p_graminis:NW_003526668.1,p_graminis:NW_003526667.1,p_graminis:NW_003526660.1,p_graminis:NW_003526657.1,p_graminis:NW_003526652.1,p_graminis:NW_003526646.1,p_graminis:NW_003526637.1,p_graminis:NW_003526632.1,p_graminis:NW_003526630.1,p_graminis:NW_003526629.1,p_graminis:NW_003526621.1,p_graminis:NW_003526617.1,p_graminis:NW_003526609.1,p_graminis:NW_003526595.1,p_graminis:NW_003526586.1,p_graminis:NW_003526580.1,p_graminis:NW_003526579.1,p_graminis:NW_003526564.1,p_graminis:NW_003526938.1,p_graminis:NW_003526926.1,p_graminis:NW_003526925.1,p_graminis:NW_003526898.1,p_graminis:NW_003526883.1,p_graminis:NW_003526873.1,p_graminis:NW_003526866.1,p_graminis:NW_003526865.1,p_graminis:NW_003526843.1,p_graminis:NW_003526833.1,p_graminis:NW_003526832.1,p_graminis:NW_003526829.1,p_graminis:NW_003526823.1,p_graminis:NW_003526818.1,p_graminis:NW_003526816.1,p_graminis:NW_003526814.1,p_graminis:NW_003526807.1,p_graminis:NW_003526802.1,p_graminis:NW_003526800.1,p_graminis:NW_003526797.1,p_graminis:NW_003526796.1,p_graminis:NW_003526795.1,p_graminis:NW_003526793.1,p_graminis:NW_003526783.1,p_graminis:NW_003526773.1,p_graminis:NW_003526758.1 ===
+Metric                               Value
+Evaluated bases                    8189494
+Exact 21-state accuracy             0.8815
+Illegal transitions                      0
+Predicted gene intervals              1687
+Gold gene intervals                    861
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.6030      0.8213      0.6955      0.9102    839889    552900    182688   6614017
+intron            0.6259      0.4740      0.5394      0.9692    147909     88418    164147   7789020
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.2940      0.5761         496        1687         861
+stop              0.2774      0.5436         468        1687         861
+donor             0.6642      0.4924        1529        2302        3105
+acceptor          0.6347      0.4705        1461        2302        3105

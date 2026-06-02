@@ -1,0 +1,28 @@
+
+=== Test: y_lipolytica:NC_090774.1 ===
+Metric                               Value
+Evaluated bases                    3042493
+Exact 21-state accuracy             0.9485
+Illegal transitions                      0
+Predicted gene intervals               942
+Gold gene intervals                    832
+Intron length cap p95                  232
+Gene start penalty                  1.0000
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                      0.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9394      0.9529      0.9461      0.9611   1038708     67029     51393   1885363
+intron            0.3978      0.2221      0.2851      0.9856      8715     13194     30517   2990067
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.6423      0.7272         605         942         832
+stop              0.7389      0.8365         696         942         832
+donor             0.3385      0.3317          66         195         199
+acceptor          0.3487      0.3417          68         195         199
