@@ -7,27 +7,28 @@ FASTA plus a GFF annotation. Per-genome behavior is driven by a JSON profile in
 `src/genome_profiles/`. Donor/acceptor splice sites and translation starts are
 scored by PyTorch CNNs; the HMM consumes their per-position log-odds.
 
-**Current version: 4.1** — decodes both strands and merges predictions. See
-[Version history](#version-history).
+**Current version: 4.2** — order-5 intron body emission on top of dual-strand
+decoding. See [Version history](#version-history).
 
-## Results (V4.1, fission-yeast holdout)
+## Results (V4.2, fission-yeast holdout)
 
 Four held-out chromosomes (one per species), both strands, 23,565,610 evaluated
 bases. Reports live in [`validation/results/version_4/`](validation/results/version_4/).
 
 | Metric | Value |
 | --- | --- |
-| Exact 21-state accuracy | 0.9701 |
-| Coding F1 | 0.9740 (P 0.9687 / R 0.9793) |
-| Intron F1 | 0.8169 (P 0.9267 / R 0.7304) |
-| Start boundary | P 0.8428 / R 0.8409 |
-| Stop boundary | P 0.9168 / R 0.9147 |
-| Donor boundary | P 0.9121 / R 0.8039 |
-| Acceptor boundary | P 0.9150 / R 0.8064 |
-| Predicted genes | 7426 (gold 7443) |
+| Exact 21-state accuracy | 0.9723 |
+| Coding F1 | 0.9757 (P 0.9688 / R 0.9827) |
+| Intron F1 | 0.8413 (P 0.9221 / R 0.7735) |
+| Start boundary | P 0.8474 / R 0.8554 |
+| Stop boundary | P 0.9164 / R 0.9252 |
+| Donor boundary | P 0.9043 / R 0.8516 |
+| Acceptor boundary | P 0.9049 / R 0.8522 |
+| Predicted genes | 7514 (gold 7443) |
 
-Per-species exact 21-state accuracy: `s_pombe` 0.9755, `s_japonicus` 0.9508,
-`s_octosporus` 0.9808, `s_cryophilus` 0.9765.
+Versus V4.1, the order-5 intron body lifts intron F1 0.8169 → 0.8413 (recall
+0.7304 → 0.7735) and donor/acceptor recall ~0.80 → ~0.85, with intron precision
+essentially flat (0.9267 → 0.9221).
 
 ## Model
 
@@ -37,7 +38,7 @@ emission model:
 | State family | Emission | Detail |
 | --- | --- | --- |
 | `INTERGENIC` | Markov order-1 | `log P(base \| previous base)` |
-| `INTRON_1/2/3` | Markov order-1 | `log P(base \| previous base)` |
+| `INTRON_1/2/3` | Markov order-5 | codon-agnostic 1024×4 context table |
 | `EXON_FRAME_1/2/3` | Markov order-5, per frame | codon-periodic 1024×4 table per frame |
 | `DONOR_1/2/3` | splice CNN log-odds | requires canonical `GT` |
 | `ACCEPTOR_1/2/3` | splice CNN log-odds | requires canonical `AG` |
