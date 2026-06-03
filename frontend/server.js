@@ -17,10 +17,24 @@ const uploadDir = path.join(localDataDir, "uploads");
 const scoresDir = path.join(localDataDir, "splice_scores");
 const binDir = path.join(localDataDir, "bin");
 const predictorBin = path.join(binDir, "hmm_predict_fna");
-const profilePath = path.join(
-  repoRoot,
-  "src/genome_profiles/fission_yeasts/fission_yeasts.json"
-);
+const DEFAULT_MODEL_ID = "fission_yeasts";
+const PRETRAINED_MODEL_CATALOG = [
+  {
+    id: "fission_yeasts",
+    label: "Fission yeasts",
+    tag: "Recommended",
+    version: "v4.1",
+    recommended: true,
+    profilePath: "src/genome_profiles/fission_yeasts/fission_yeasts.json",
+  },
+  {
+    id: "fungi_diverse",
+    label: "Diverse fungi",
+    tag: "Pan-fungal",
+    version: "24 genomes",
+    profilePath: "src/genome_profiles/fungi_diverse/fungi_diverse.json",
+  },
+];
 const scoreSpliceScript = path.join(repoRoot, "src/model/cnn/score_fasta.py");
 const scoreStartScript = path.join(repoRoot, "src/model/cnn/score_start_fasta.py");
 const trainCachedModelScript = path.join(
@@ -134,38 +148,94 @@ async function ensurePredictorBuilt() {
   );
 }
 
-function readProfile() {
+function resolveProfilePath(modelId = DEFAULT_MODEL_ID) {
+  const entry = PRETRAINED_MODEL_CATALOG.find((model) => model.id === modelId);
+  if (!entry) {
+    throw new Error(`Unknown pretrained model "${modelId}".`);
+  }
+  return path.join(repoRoot, entry.profilePath);
+}
+
+function resolveModelEntry(modelId = DEFAULT_MODEL_ID) {
+  const entry = PRETRAINED_MODEL_CATALOG.find((model) => model.id === modelId);
+  if (!entry) {
+    throw new Error(`Unknown pretrained model "${modelId}".`);
+  }
+  return entry;
+}
+
+function readProfileAt(profilePath) {
   return JSON.parse(fs.readFileSync(profilePath, "utf8"));
 }
 
-function spliceModelPath() {
-  return path.join(repoRoot, readProfile().splice_cnn.model);
+function modelCheckpointStatus(profile) {
+  const splicePath = path.join(repoRoot, profile.splice_cnn.model);
+  const startPath = path.join(repoRoot, profile.start_cnn.model);
+  const missing = [];
+  if (!fs.existsSync(splicePath)) missing.push("splice CNN");
+  if (!fs.existsSync(startPath)) missing.push("start CNN");
+  return {
+    available: missing.length === 0,
+    missing,
+    splicePath,
+    startPath,
+  };
 }
 
-function startModelPath() {
-  return path.join(repoRoot, readProfile().start_cnn.model);
+function listPretrainedModels() {
+  return PRETRAINED_MODEL_CATALOG.map((entry) => {
+    const profilePath = path.join(repoRoot, entry.profilePath);
+    const profile = readProfileAt(profilePath);
+    const checkpoints = modelCheckpointStatus(profile);
+    return {
+      id: entry.id,
+      label: entry.label,
+      tag: entry.tag,
+      version: entry.version,
+      description: profile.description ?? "",
+      available: checkpoints.available,
+      missing: checkpoints.missing,
+      recommended: Boolean(entry.recommended),
+    };
+  });
 }
 
-async function ensureCnnModels() {
-  const splicePath = spliceModelPath();
-  const startPath = startModelPath();
-  if (fs.existsSync(splicePath) && fs.existsSync(startPath)) {
+function spliceModelPath(profilePath) {
+  return path.join(repoRoot, readProfileAt(profilePath).splice_cnn.model);
+}
+
+function startModelPath(profilePath) {
+  return path.join(repoRoot, readProfileAt(profilePath).start_cnn.model);
+}
+
+async function ensureCnnModels(profilePath, modelEntry) {
+  const profile = readProfileAt(profilePath);
+  const { available, missing, splicePath, startPath } = modelCheckpointStatus(profile);
+  if (available) {
     return;
   }
 
-  console.log("CNN checkpoints missing; training cached fission-yeast models (first run only)...");
-  await execFilePromise(
-    pythonBin,
-    [trainCachedModelScript, "--profile", profilePath, "--skip-compile"],
-    { cwd: repoRoot, maxBuffer: 1024 * 1024 * 64 }
-  );
-  if (!fs.existsSync(splicePath) || !fs.existsSync(startPath)) {
-    throw new Error("CNN checkpoints were not created. Check train_cached_model.py output.");
+  if (modelEntry.id === DEFAULT_MODEL_ID) {
+    console.log(
+      `CNN checkpoints missing for ${modelEntry.label}; refreshing cached models (first run only)...`
+    );
+    await execFilePromise(
+      pythonBin,
+      [trainCachedModelScript, "--profile", profilePath, "--skip-compile"],
+      { cwd: repoRoot, maxBuffer: 1024 * 1024 * 64 }
+    );
+    if (fs.existsSync(splicePath) && fs.existsSync(startPath)) {
+      return;
+    }
   }
+
+  throw new Error(
+    `Missing ${missing.join(" and ")} for ${modelEntry.label}. Install the pretrained checkpoints before running this model.`
+  );
 }
 
-async function ensureSpliceScores(fastaPath, scoresPath) {
-  await ensureCnnModels();
+async function ensureSpliceScores(fastaPath, scoresPath, profilePath, modelEntry) {
+  await ensureCnnModels(profilePath, modelEntry);
   await execFilePromise(
     pythonBin,
     [
@@ -173,7 +243,7 @@ async function ensureSpliceScores(fastaPath, scoresPath) {
       "--fasta",
       fastaPath,
       "--model",
-      spliceModelPath(),
+      spliceModelPath(profilePath),
       "--scores-out",
       scoresPath,
     ],
@@ -181,8 +251,8 @@ async function ensureSpliceScores(fastaPath, scoresPath) {
   );
 }
 
-async function ensureStartScores(fastaPath, scoresPath) {
-  await ensureCnnModels();
+async function ensureStartScores(fastaPath, scoresPath, profilePath, modelEntry) {
+  await ensureCnnModels(profilePath, modelEntry);
   await execFilePromise(
     pythonBin,
     [
@@ -190,7 +260,7 @@ async function ensureStartScores(fastaPath, scoresPath) {
       "--fasta",
       fastaPath,
       "--model",
-      startModelPath(),
+      startModelPath(profilePath),
       "--scores-out",
       scoresPath,
     ],
@@ -204,12 +274,14 @@ function makeRunName(fileName) {
   return `${stem}_${stamp}`;
 }
 
-function makeRunRecord(fileName, inputPath, predictionResult, elapsedMs, runId) {
+function makeRunRecord(fileName, inputPath, predictionResult, elapsedMs, runId, modelEntry) {
   return {
     id: runId,
     name: runId,
     fileName,
     inputPath,
+    modelId: modelEntry.id,
+    modelLabel: modelEntry.label,
     date: new Date().toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -263,6 +335,77 @@ function resolveProjectPath(projectId, relPath = "") {
     throw new Error("Invalid project path.");
   }
   return resolved;
+}
+
+function normalizeInputFilePath(relPath) {
+  const normalized = String(relPath).trim().replace(/\\/g, "/");
+  if (!normalized.startsWith("inputs/")) {
+    throw new Error("Only files under Inputs can be modified.");
+  }
+  const parts = normalized.split("/").filter(Boolean);
+  if (parts.length < 2 || parts[0] !== "inputs") {
+    throw new Error("Invalid file path.");
+  }
+  const fileName = parts[parts.length - 1];
+  if (!fileName || fileName === "." || fileName === "..") {
+    throw new Error("Invalid file path.");
+  }
+  return normalized;
+}
+
+function sanitizeInputFileName(name) {
+  const trimmed = String(name).trim();
+  if (!trimmed) {
+    throw new Error("File name is required.");
+  }
+  if (trimmed.includes("/") || trimmed.includes("\\") || trimmed === "." || trimmed === "..") {
+    throw new Error("File name cannot contain path separators.");
+  }
+  return trimmed;
+}
+
+function normalizeInputFolderPath(relPath) {
+  const normalized = String(relPath).trim().replace(/\\/g, "/");
+  if (normalized !== "inputs" && !normalized.startsWith("inputs/")) {
+    throw new Error("Destination must be under Inputs.");
+  }
+  return normalized;
+}
+
+function normalizeMutableInputFolderPath(relPath) {
+  const normalized = normalizeInputFolderPath(relPath);
+  if (normalized === "inputs") {
+    throw new Error("The Inputs folder cannot be modified.");
+  }
+  const parts = normalized.split("/").filter(Boolean);
+  if (parts.length < 2 || parts[0] !== "inputs") {
+    throw new Error("Invalid folder path.");
+  }
+  return normalized;
+}
+
+function normalizeRunPath(relPath) {
+  const normalized = String(relPath).trim().replace(/\\/g, "/");
+  if (!normalized.startsWith("runs/")) {
+    throw new Error("Invalid run path.");
+  }
+  const parts = normalized.split("/").filter(Boolean);
+  if (parts.length !== 2 || parts[0] !== "runs") {
+    throw new Error("Invalid run path.");
+  }
+  return normalized;
+}
+
+function sanitizeFolderName(name) {
+  return sanitizeInputFileName(name);
+}
+
+function isFolderDescendantPath(ancestorPath, descendantPath) {
+  return descendantPath === ancestorPath || descendantPath.startsWith(`${ancestorPath}/`);
+}
+
+function deleteDirectoryRecursive(dirPath) {
+  fs.rmSync(dirPath, { recursive: true, force: true });
 }
 
 function listProjects() {
@@ -373,12 +516,24 @@ function buildProjectTree(projectId, relPath = "") {
     return [];
   }
 
+  const includeFiles = relPath === "inputs" || relPath.startsWith("inputs/");
+
   return fs
     .readdirSync(dirPath, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() || (includeFiles && entry.isFile()))
     .map((entry) => {
       const childRel = relPath ? `${relPath}/${entry.name}` : entry.name;
       const entryPath = path.join(dirPath, entry.name);
+
+      if (entry.isFile()) {
+        return {
+          name: entry.name,
+          path: childRel,
+          type: "file",
+          size: fs.statSync(entryPath).size,
+        };
+      }
+
       const runJsonPath = path.join(entryPath, "run.json");
 
       if (fs.existsSync(runJsonPath)) {
@@ -402,6 +557,14 @@ function buildProjectTree(projectId, relPath = "") {
         type: "folder",
         children: buildProjectTree(projectId, childRel),
       };
+    })
+    .sort((left, right) => {
+      const leftIsFolder = left.type === "folder" || left.type === "run";
+      const rightIsFolder = right.type === "folder" || right.type === "run";
+      if (leftIsFolder !== rightIsFolder) {
+        return leftIsFolder ? -1 : 1;
+      }
+      return left.name.localeCompare(right.name);
     });
 }
 
@@ -413,10 +576,19 @@ function readRun(projectId, runId) {
   return JSON.parse(fs.readFileSync(runJsonPath, "utf8"));
 }
 
-async function executeProjectRun(projectId, inputRelPath) {
+async function executeProjectRun(projectId, inputRelPath, modelId = DEFAULT_MODEL_ID) {
   const inputPath = resolveProjectPath(projectId, inputRelPath);
   if (!fs.existsSync(inputPath) || !fs.statSync(inputPath).isFile()) {
     throw new Error("Input FASTA file not found.");
+  }
+
+  const modelEntry = resolveModelEntry(modelId);
+  const profilePath = resolveProfilePath(modelId);
+  const checkpoints = modelCheckpointStatus(readProfileAt(profilePath));
+  if (!checkpoints.available) {
+    throw new Error(
+      `Model "${modelEntry.label}" is not fully installed (${checkpoints.missing.join(", ")} missing).`
+    );
   }
 
   const runId = makeRunName(path.basename(inputRelPath));
@@ -435,8 +607,8 @@ async function executeProjectRun(projectId, inputRelPath) {
 
   try {
     await ensurePredictorBuilt();
-    await ensureSpliceScores(inputPath, spliceScoresPath);
-    await ensureStartScores(inputPath, startScoresPath);
+    await ensureSpliceScores(inputPath, spliceScoresPath, profilePath, modelEntry);
+    await ensureStartScores(inputPath, startScoresPath, profilePath, modelEntry);
     const { stdout } = await execFilePromise(
       predictorBin,
       [
@@ -457,7 +629,8 @@ async function executeProjectRun(projectId, inputRelPath) {
       inputRelPath.replace(/\\/g, "/"),
       predictionResult,
       Date.now() - started,
-      runId
+      runId,
+      modelEntry
     );
     fs.writeFileSync(path.join(runDir, "run.json"), JSON.stringify(run, null, 2));
     fs.writeFileSync(statusPath, JSON.stringify({ status: "done" }, null, 2));
@@ -568,6 +741,10 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, mode: "local" });
 });
 
+app.get("/api/models", (_req, res) => {
+  res.json(listPretrainedModels());
+});
+
 app.get("/api/projects", (_req, res) => {
   res.json(listProjects());
 });
@@ -600,6 +777,123 @@ app.get("/api/projects/:projectId/list", (req, res) => {
   }
 });
 
+app.get("/api/projects/:projectId/files/download", (req, res) => {
+  try {
+    const relPath = String(req.query.path ?? "").trim();
+    if (!relPath) {
+      res.status(400).json({ error: "File path is required." });
+      return;
+    }
+    const filePath = resolveProjectPath(req.params.projectId, relPath);
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+      res.status(404).json({ error: "File not found." });
+      return;
+    }
+    res.download(filePath, path.basename(filePath));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/api/projects/:projectId/files/preview", (req, res) => {
+  try {
+    const relPath = String(req.query.path ?? "").trim();
+    const maxLines = Math.min(Math.max(Number(req.query.lines) || 48, 1), 800);
+    if (!relPath) {
+      res.status(400).json({ error: "File path is required." });
+      return;
+    }
+    const filePath = resolveProjectPath(req.params.projectId, relPath);
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+      res.status(404).json({ error: "File not found." });
+      return;
+    }
+    const content = fs.readFileSync(filePath, "utf8");
+    const lines = content.split(/\r?\n/);
+    const previewLines = lines.slice(0, maxLines);
+    res.json({
+      lines: previewLines,
+      lineCount: lines.length,
+      truncated: lines.length > maxLines,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.patch("/api/projects/:projectId/files", (req, res) => {
+  try {
+    const relPath = normalizeInputFilePath(req.body?.path ?? "");
+    const projectId = req.params.projectId;
+    const filePath = resolveProjectPath(projectId, relPath);
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+      res.status(404).json({ error: "File not found." });
+      return;
+    }
+
+    const currentName = path.posix.basename(relPath);
+    const newName =
+      req.body?.name != null && String(req.body.name).trim()
+        ? sanitizeInputFileName(req.body.name)
+        : currentName;
+    const destinationFolder =
+      req.body?.folder != null
+        ? normalizeInputFolderPath(req.body.folder)
+        : path.posix.dirname(relPath);
+    const destinationDir = resolveProjectPath(projectId, destinationFolder);
+    if (!fs.existsSync(destinationDir) || !fs.statSync(destinationDir).isDirectory()) {
+      res.status(404).json({ error: "Destination folder not found." });
+      return;
+    }
+
+    const nextRelPath = `${destinationFolder}/${newName}`;
+    if (nextRelPath === relPath) {
+      res.json({
+        folder: destinationFolder,
+        name: currentName,
+        path: relPath,
+        size: fs.statSync(filePath).size,
+      });
+      return;
+    }
+
+    const nextPath = resolveProjectPath(projectId, nextRelPath);
+    if (fs.existsSync(nextPath)) {
+      res.status(409).json({ error: "A file with that name already exists in the destination folder." });
+      return;
+    }
+
+    fs.renameSync(filePath, nextPath);
+    touchProject(projectId);
+    res.json({
+      folder: destinationFolder,
+      name: newName,
+      path: nextRelPath,
+      size: fs.statSync(nextPath).size,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete("/api/projects/:projectId/files", (req, res) => {
+  try {
+    const relPath = normalizeInputFilePath(req.body?.path ?? req.query?.path ?? "");
+    const projectId = req.params.projectId;
+    const filePath = resolveProjectPath(projectId, relPath);
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+      res.status(404).json({ error: "File not found." });
+      return;
+    }
+
+    fs.unlinkSync(filePath);
+    touchProject(projectId);
+    res.json({ ok: true, path: relPath });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 app.post("/api/projects/:projectId/folders", (req, res) => {
   try {
     const name = String(req.body?.name ?? "").trim();
@@ -615,6 +909,79 @@ app.post("/api/projects/:projectId/folders", (req, res) => {
     fs.mkdirSync(folderPath, { recursive: true });
     touchProject(req.params.projectId);
     res.status(201).json({ path: parentPath ? `${parentPath}/${name}` : name });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.patch("/api/projects/:projectId/folders", (req, res) => {
+  try {
+    const relPath = normalizeMutableInputFolderPath(req.body?.path ?? "");
+    const projectId = req.params.projectId;
+    const folderPath = resolveProjectPath(projectId, relPath);
+    if (!fs.existsSync(folderPath) || !fs.statSync(folderPath).isDirectory()) {
+      res.status(404).json({ error: "Folder not found." });
+      return;
+    }
+    if (fs.existsSync(path.join(folderPath, "run.json"))) {
+      res.status(400).json({ error: "Cannot modify an analysis run as a folder." });
+      return;
+    }
+
+    const currentName = path.posix.basename(relPath);
+    const newName =
+      req.body?.name != null && String(req.body.name).trim()
+        ? sanitizeFolderName(req.body.name)
+        : currentName;
+    const destinationParent =
+      req.body?.folder != null
+        ? normalizeInputFolderPath(req.body.folder)
+        : path.posix.dirname(relPath);
+    const nextRelPath = `${destinationParent}/${newName}`;
+
+    if (nextRelPath === relPath) {
+      res.json({ name: currentName, path: relPath });
+      return;
+    }
+
+    if (isFolderDescendantPath(relPath, destinationParent)) {
+      res.status(400).json({ error: "Cannot move a folder into itself." });
+      return;
+    }
+
+    const destinationDir = resolveProjectPath(projectId, destinationParent);
+    if (!fs.existsSync(destinationDir) || !fs.statSync(destinationDir).isDirectory()) {
+      res.status(404).json({ error: "Destination folder not found." });
+      return;
+    }
+
+    const nextPath = resolveProjectPath(projectId, nextRelPath);
+    if (fs.existsSync(nextPath)) {
+      res.status(409).json({ error: "A folder with that name already exists in the destination." });
+      return;
+    }
+
+    fs.renameSync(folderPath, nextPath);
+    touchProject(projectId);
+    res.json({ name: newName, path: nextRelPath });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete("/api/projects/:projectId/folders", (req, res) => {
+  try {
+    const relPath = normalizeMutableInputFolderPath(req.body?.path ?? req.query?.path ?? "");
+    const projectId = req.params.projectId;
+    const folderPath = resolveProjectPath(projectId, relPath);
+    if (!fs.existsSync(folderPath) || !fs.statSync(folderPath).isDirectory()) {
+      res.status(404).json({ error: "Folder not found." });
+      return;
+    }
+
+    deleteDirectoryRecursive(folderPath);
+    touchProject(projectId);
+    res.json({ ok: true, path: relPath });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -648,13 +1015,14 @@ app.post("/api/projects/:projectId/upload", upload.single("file"), (req, res) =>
 
 app.post("/api/projects/:projectId/runs", async (req, res) => {
   const inputPath = String(req.body?.inputPath ?? "").trim();
+  const modelId = String(req.body?.modelId ?? DEFAULT_MODEL_ID).trim();
   if (!inputPath) {
     res.status(400).json({ error: "Input path is required." });
     return;
   }
 
   try {
-    const run = await executeProjectRun(req.params.projectId, inputPath);
+    const run = await executeProjectRun(req.params.projectId, inputPath, modelId);
     res.json(run);
   } catch (error) {
     res.status(500).json({
@@ -669,6 +1037,59 @@ app.get("/api/projects/:projectId/runs/:runId", (req, res) => {
     res.json(readRun(req.params.projectId, req.params.runId));
   } catch {
     res.status(404).json({ error: "Run not found." });
+  }
+});
+
+app.patch("/api/projects/:projectId/runs", (req, res) => {
+  try {
+    const relPath = normalizeRunPath(req.body?.path ?? "");
+    const projectId = req.params.projectId;
+    const runDir = resolveProjectPath(projectId, relPath);
+    const runJsonPath = path.join(runDir, "run.json");
+    if (!fs.existsSync(runDir) || !fs.existsSync(runJsonPath)) {
+      res.status(404).json({ error: "Run not found." });
+      return;
+    }
+
+    const newName = sanitizeFolderName(req.body?.name ?? "");
+    const nextRelPath = `runs/${newName}`;
+    const nextRunDir = resolveProjectPath(projectId, nextRelPath);
+
+    if (nextRelPath !== relPath && fs.existsSync(nextRunDir)) {
+      res.status(409).json({ error: "An analysis with that name already exists." });
+      return;
+    }
+
+    if (nextRelPath !== relPath) {
+      fs.renameSync(runDir, nextRunDir);
+    }
+
+    const run = JSON.parse(fs.readFileSync(path.join(nextRunDir, "run.json"), "utf8"));
+    run.id = newName;
+    run.name = newName;
+    fs.writeFileSync(path.join(nextRunDir, "run.json"), JSON.stringify(run, null, 2));
+    touchProject(projectId);
+    res.json({ label: run.name, name: newName, path: nextRelPath });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete("/api/projects/:projectId/runs", (req, res) => {
+  try {
+    const relPath = normalizeRunPath(req.body?.path ?? req.query?.path ?? "");
+    const projectId = req.params.projectId;
+    const runDir = resolveProjectPath(projectId, relPath);
+    if (!fs.existsSync(runDir) || !fs.statSync(runDir).isDirectory()) {
+      res.status(404).json({ error: "Run not found." });
+      return;
+    }
+
+    deleteDirectoryRecursive(runDir);
+    touchProject(projectId);
+    res.json({ ok: true, path: relPath });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 

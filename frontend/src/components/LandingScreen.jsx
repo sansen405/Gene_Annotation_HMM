@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { DnaStrand } from "./DnaStrand.jsx";
-import { fadeIn, lineReveal, premiumEase, staggerContainer } from "../lib/motion.js";
+import { lineReveal, premiumEase, staggerContainer } from "../lib/motion.js";
 
 function HeroTitle({ lines }) {
   const reduceMotion = useReducedMotion();
@@ -38,7 +38,7 @@ function HeroTitle({ lines }) {
 
 export function LandingScreen({ onEnter, projectCount = 0 }) {
   const reduceMotion = useReducedMotion();
-  const heroLines = ["Decode genomes", "on your machine."];
+  const heroLines = ["Built for", "genome research"];
 
   return (
     <main className="landing-page">
@@ -47,24 +47,6 @@ export function LandingScreen({ onEnter, projectCount = 0 }) {
       </div>
 
       <div className="landing-content">
-        <motion.div
-          animate={reduceMotion ? undefined : "visible"}
-          className="landing-helix-mark"
-          initial={reduceMotion ? undefined : "hidden"}
-          variants={fadeIn}
-        >
-          <DnaStrand className="landing-helix-icon" />
-        </motion.div>
-
-        <motion.p
-          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-          className="landing-kicker"
-          initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
-          transition={{ delay: 0.1, duration: 0.8, ease: premiumEase }}
-        >
-          Gene annotation
-        </motion.p>
-
         <HeroTitle lines={heroLines} />
 
         <motion.p
@@ -73,8 +55,8 @@ export function LandingScreen({ onEnter, projectCount = 0 }) {
           initial={reduceMotion ? undefined : { opacity: 0, y: 20 }}
           transition={{ delay: 0.28, duration: 0.85, ease: premiumEase }}
         >
-          Upload FASTA, run the HMM decoder with CNN splice scores, and explore genes on an
-          interactive track — all locally, with no cloud upload.
+          Organize sequence data, run analyses, and explore results in one local workspace —
+          built for end-to-end genome research, with no cloud upload.
         </motion.p>
 
         <motion.div
@@ -89,7 +71,7 @@ export function LandingScreen({ onEnter, projectCount = 0 }) {
           </button>
           {projectCount > 0 && (
             <p className="landing-resume">
-              {projectCount} workspace{projectCount === 1 ? "" : "s"} saved on this machine
+              {projectCount} project{projectCount === 1 ? "" : "s"} saved on this machine
             </p>
           )}
         </motion.div>
@@ -101,16 +83,16 @@ export function LandingScreen({ onEnter, projectCount = 0 }) {
           transition={{ delay: 0.52, duration: 0.85, ease: premiumEase }}
         >
           <div>
+            <dt>Analyze</dt>
+            <dd>Pipelines & tools</dd>
+          </div>
+          <div>
+            <dt>Research</dt>
+            <dd>Tracks & exploration</dd>
+          </div>
+          <div>
             <dt>Model</dt>
-            <dd>21-state HMM</dd>
-          </div>
-          <div>
-            <dt>Splice sites</dt>
-            <dd>Calibrated CNN</dd>
-          </div>
-          <div>
-            <dt>Export</dt>
-            <dd>GFF3, CSV, BED</dd>
+            <dd>HMM + CNN</dd>
           </div>
         </motion.dl>
       </div>

@@ -254,19 +254,7 @@ export function ResultsView({
 
   return (
     <>
-      <header className="workspace-masthead workspace-masthead--results">
-        {breadcrumbs.length > 0 && (
-          <nav className="breadcrumbs workspace-breadcrumbs" aria-label="Breadcrumb">
-            {breadcrumbs.map((crumb, index) => (
-              <span className="breadcrumb-item" key={crumb.path}>
-                {index > 0 && <ChevronRight size={14} />}
-                <button onClick={() => onNavigate?.(crumb.path)} type="button">
-                  {crumb.label}
-                </button>
-              </span>
-            ))}
-          </nav>
-        )}
+      <header className="workspace-masthead workspace-masthead--file-detail workspace-masthead--results">
         <div className="results-masthead-row">
           <div className="results-masthead-copy">
             <p className="home-kicker">Results</p>

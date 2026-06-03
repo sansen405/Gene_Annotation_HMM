@@ -1,4 +1,5 @@
 const STEPS = 22;
+const TWIST = Math.PI * 4;
 
 function helixPoint(y, amplitude, phase) {
   const x = 80 + Math.cos(phase) * amplitude;
@@ -9,7 +10,7 @@ function buildStrandPath(amplitude, phaseOffset) {
   const points = [];
   for (let index = 0; index <= STEPS; index += 1) {
     const y = (index / STEPS) * 480;
-    const phase = phaseOffset + (index / STEPS) * Math.PI * 3.5;
+    const phase = phaseOffset + (index / STEPS) * TWIST;
     points.push(helixPoint(y, amplitude, phase));
   }
   return points
@@ -19,9 +20,9 @@ function buildStrandPath(amplitude, phaseOffset) {
 
 function buildRungs(amplitude) {
   const rungs = [];
-  for (let index = 0; index <= STEPS; index += 1) {
+  for (let index = 1; index < STEPS; index += 1) {
     const y = (index / STEPS) * 480;
-    const phase = (index / STEPS) * Math.PI * 3.5;
+    const phase = (index / STEPS) * TWIST;
     const x1 = 80 + Math.cos(phase) * amplitude;
     const x2 = 80 - Math.cos(phase) * amplitude;
     rungs.push({ x1, x2, y, key: index });

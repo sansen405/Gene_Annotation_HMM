@@ -23,7 +23,8 @@ export async function apiFetch(path, options = {}) {
   let response;
   try {
     response = await fetch(`${API_BASE}${path}`, options);
-  } catch {
+  } catch (error) {
+    if (error?.name === "AbortError") throw error;
     throw connectionError();
   }
   const payload = await readJsonResponse(response);
