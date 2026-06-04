@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "better-sqlite3": "latest",
     "concurrently": "latest",
     "cors": "latest",
     "express": "latest",

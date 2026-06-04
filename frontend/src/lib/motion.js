@@ -15,25 +15,16 @@ export const staggerContainer = {
   },
 };
 
-export const fadeUp = {
-  hidden: {
-    opacity: 0,
-    y: 36,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: revealTransition,
-  },
-};
+// Unused exports — not imported anywhere in the codebase.
+// export const fadeUp = {
+//   hidden: { opacity: 0, y: 36 },
+//   visible: { opacity: 1, y: 0, transition: revealTransition },
+// };
 
-export const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.8, ease: premiumEase },
-  },
-};
+// export const fadeIn = {
+//   hidden: { opacity: 0 },
+//   visible: { opacity: 1, transition: { duration: 0.8, ease: premiumEase } },
+// };
 
 export const lineReveal = {
   hidden: {

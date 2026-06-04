@@ -331,7 +331,7 @@ function App() {
     setSelectedRun(null);
     setSelectedPath("inputs");
     setRunStatus("idle");
-    setRunningInputName("");
+    setRunningInputPath("");
     setErrorMessage("");
     refreshProjects();
   }

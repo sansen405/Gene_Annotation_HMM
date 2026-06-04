@@ -65,6 +65,7 @@
   box-sizing: border-box;
 }
 
+/* Lenis smooth-scroll rules — unused: Lenis is never instantiated so html.lenis is never set.
 html.lenis,
 html.lenis body {
   height: auto;
@@ -77,6 +78,7 @@ html.lenis body {
 .lenis.lenis-smooth [data-lenis-prevent] {
   overscroll-behavior: contain;
 }
+*/
 
 body {
   margin: 0;

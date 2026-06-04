@@ -5,8 +5,8 @@ import {
   Download,
   FileArchive,
   FileCode2,
-  FlaskConical,
-  Plus,
+  // FlaskConical, // unused — only used in dead !selectedRun branch
+  // Plus,         // unused — only used in dead !selectedRun branch
   Search,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -229,28 +229,30 @@ export function ResultsView({
     );
   }, [activeScaffold, end, selectedRun, start]);
 
-  if (!selectedRun) {
-    return (
-      <section className="page results-page">
-        <PageHeader
-          section="Results"
-          title="Prediction results"
-          subtitle="Run a local prediction to view genes, tracks, and confidence."
-        />
-        <div className="card empty-results">
-          <div className="empty-results-icon">
-            <FlaskConical size={28} strokeWidth={1.75} />
-          </div>
-          <h2>No results yet</h2>
-          <p>Upload a FASTA file and run the HMM predictor to see genes, tracks, and confidence here.</p>
-          <button className="primary-action" onClick={onStartAnalysis} type="button">
-            <Plus size={17} />
-            Start new analysis
-          </button>
-        </div>
-      </section>
-    );
-  }
+  // ResultsView is only mounted when selectedRun is truthy (App.jsx guards the render),
+  // so this branch is unreachable. Kept for reference.
+  // if (!selectedRun) {
+  //   return (
+  //     <section className="page results-page">
+  //       <PageHeader
+  //         section="Results"
+  //         title="Prediction results"
+  //         subtitle="Run a local prediction to view genes, tracks, and confidence."
+  //       />
+  //       <div className="card empty-results">
+  //         <div className="empty-results-icon">
+  //           <FlaskConical size={28} strokeWidth={1.75} />
+  //         </div>
+  //         <h2>No results yet</h2>
+  //         <p>Upload a FASTA file and run the HMM predictor to see genes, tracks, and confidence here.</p>
+  //         <button className="primary-action" onClick={onStartAnalysis} type="button">
+  //           <Plus size={17} />
+  //           Start new analysis
+  //         </button>
+  //       </div>
+  //     </section>
+  //   );
+  // }
 
   return (
     <>
@@ -806,23 +808,14 @@ function GenomeTrack({ predictions, start, end, onRangeSelect }) {
         )}
       </div>
       <p className="track-hint">Drag on the track to select a sub-range</p>
+      {/* Duplicate legend removed — TrackLegend component renders above the track.
       <div className="track-legend">
-        <span>
-          <i className="legend-gray" /> Intergenic
-        </span>
-        <span>
-          <i className="legend-blue" /> UTR
-        </span>
-        <span>
-          <i className="legend-purple" /> Intron
-        </span>
-        <span>
-          <i className="legend-green" /> Start
-        </span>
-        <span>
-          <i className="legend-red" /> Stop
-        </span>
-      </div>
+        <span><i className="legend-gray" /> Intergenic</span>
+        <span><i className="legend-blue" /> UTR</span>
+        <span><i className="legend-purple" /> Intron</span>
+        <span><i className="legend-green" /> Start</span>
+        <span><i className="legend-red" /> Stop</span>
+      </div> */}
     </div>
   );
 }
@@ -928,39 +921,43 @@ function ExportCard({ exportBaseUrl }) {
   );
 }
 
-function PageHeader({ section, title, subtitle }) {
-  return (
-    <header className="page-header">
-      {section && <p className="page-section">{section}</p>}
-      <h1>{title}</h1>
-      {subtitle ? <p className="page-subtitle">{subtitle}</p> : null}
-    </header>
-  );
-}
+// Unused — only referenced from the dead !selectedRun branch above.
+// function PageHeader({ section, title, subtitle }) {
+//   return (
+//     <header className="page-header">
+//       {section && <p className="page-section">{section}</p>}
+//       <h1>{title}</h1>
+//       {subtitle ? <p className="page-subtitle">{subtitle}</p> : null}
+//     </header>
+//   );
+// }
 
-function SectionTitle({ icon, title }) {
-  return (
-    <div className="section-title">
-      <div className="section-icon">{icon}</div>
-      <h2>{title}</h2>
-    </div>
-  );
-}
+// Unused — defined but never called.
+// function SectionTitle({ icon, title }) {
+//   return (
+//     <div className="section-title">
+//       <div className="section-icon">{icon}</div>
+//       <h2>{title}</h2>
+//     </div>
+//   );
+// }
 
-function Metric({ label, value }) {
-  return (
-    <div className="metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
+// Unused — defined but never called.
+// function Metric({ label, value }) {
+//   return (
+//     <div className="metric">
+//       <span>{label}</span>
+//       <strong>{value}</strong>
+//     </div>
+//   );
+// }
 
-function formatBytes(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+// Unused in this file — defined but never called here.
+// function formatBytes(bytes) {
+//   if (bytes < 1024) return `${bytes} B`;
+//   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+//   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+// }
 
 function formatNumber(value) {
   if (typeof value !== "number") return value;

@@ -1,4 +1,5 @@
 import cors from "cors";
+import Database from "better-sqlite3";
 import express from "express";
 import { execFile } from "node:child_process";
 import fs from "node:fs";
@@ -23,7 +24,7 @@ const PRETRAINED_MODEL_CATALOG = [
     id: "fission_yeasts",
     label: "Fission yeasts",
     tag: "Recommended",
-    version: "v4.1",
+    version: "v4.2",
     recommended: true,
     profilePath: "src/genome_profiles/fission_yeasts/fission_yeasts.json",
   },
@@ -50,6 +51,124 @@ fs.mkdirSync(uploadDir, { recursive: true });
 fs.mkdirSync(scoresDir, { recursive: true });
 fs.mkdirSync(binDir, { recursive: true });
 fs.mkdirSync(projectsDir, { recursive: true });
+
+// ---------------------------------------------------------------------------
+// SQLite run index
+// Stores lightweight metadata for all runs so project-tree and list endpoints
+// don't have to read individual run.json files on every request.
+// ---------------------------------------------------------------------------
+const db = new Database(path.join(localDataDir, "runs.db"));
+db.exec(`
+  CREATE TABLE IF NOT EXISTS runs (
+    project_id      TEXT NOT NULL,
+    run_id          TEXT NOT NULL,
+    name            TEXT NOT NULL,
+    file_name       TEXT,
+    model_id        TEXT,
+    model_label     TEXT,
+    date            TEXT,
+    status          TEXT NOT NULL DEFAULT 'done',
+    genes           INTEGER NOT NULL DEFAULT 0,
+    total_bases     INTEGER NOT NULL DEFAULT 0,
+    scaffolds_count INTEGER NOT NULL DEFAULT 0,
+    elapsed_ms      INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (project_id, run_id)
+  )
+`);
+
+function upsertRun(projectId, meta) {
+  db.prepare(`
+    INSERT OR REPLACE INTO runs
+      (project_id, run_id, name, file_name, model_id, model_label, date,
+       status, genes, total_bases, scaffolds_count, elapsed_ms)
+    VALUES
+      (@project_id, @run_id, @name, @file_name, @model_id, @model_label, @date,
+       @status, @genes, @total_bases, @scaffolds_count, @elapsed_ms)
+  `).run({
+    project_id: projectId,
+    run_id: meta.id,
+    name: meta.name,
+    file_name: meta.fileName ?? null,
+    model_id: meta.modelId ?? null,
+    model_label: meta.modelLabel ?? null,
+    date: meta.date ?? null,
+    status: meta.status ?? "done",
+    genes: meta.summary?.genes ?? 0,
+    total_bases: meta.summary?.totalBases ?? 0,
+    scaffolds_count: meta.summary?.scaffolds ?? 0,
+    elapsed_ms: meta.elapsedMs ?? 0,
+  });
+}
+
+function dbGetRun(projectId, runId) {
+  return db
+    .prepare("SELECT * FROM runs WHERE project_id = ? AND run_id = ?")
+    .get(projectId, runId);
+}
+
+function dbDeleteRun(projectId, runId) {
+  db.prepare("DELETE FROM runs WHERE project_id = ? AND run_id = ?").run(projectId, runId);
+}
+
+function dbRenameRun(projectId, oldRunId, newRunId, newName) {
+  db.prepare(
+    "UPDATE runs SET run_id = ?, name = ? WHERE project_id = ? AND run_id = ?"
+  ).run(newRunId, newName, projectId, oldRunId);
+}
+
+function dbRunCountsByProject() {
+  const rows = db
+    .prepare("SELECT project_id, COUNT(*) AS count FROM runs GROUP BY project_id")
+    .all();
+  return new Map(rows.map((r) => [r.project_id, r.count]));
+}
+
+// On startup, backfill any existing runs that are not yet in the index.
+const _migrateInsert = db.prepare(`
+  INSERT OR IGNORE INTO runs
+    (project_id, run_id, name, file_name, model_id, model_label, date,
+     status, genes, total_bases, scaffolds_count, elapsed_ms)
+  VALUES
+    (@project_id, @run_id, @name, @file_name, @model_id, @model_label, @date,
+     @status, @genes, @total_bases, @scaffolds_count, @elapsed_ms)
+`);
+
+db.transaction(() => {
+  if (!fs.existsSync(projectsDir)) return;
+  for (const projectEntry of fs.readdirSync(projectsDir, { withFileTypes: true })) {
+    if (!projectEntry.isDirectory()) continue;
+    const projectId = projectEntry.name;
+    const runsPath = path.join(projectsDir, projectId, "runs");
+    if (!fs.existsSync(runsPath)) continue;
+    for (const runEntry of fs.readdirSync(runsPath, { withFileTypes: true })) {
+      if (!runEntry.isDirectory()) continue;
+      const runId = runEntry.name;
+      const runJsonPath = path.join(runsPath, runId, "run.json");
+      if (!fs.existsSync(runJsonPath)) continue;
+      try {
+        const run = JSON.parse(fs.readFileSync(runJsonPath, "utf8"));
+        _migrateInsert.run({
+          project_id: projectId,
+          run_id: runId,
+          name: run.name ?? runId,
+          file_name: run.fileName ?? null,
+          model_id: run.modelId ?? null,
+          model_label: run.modelLabel ?? null,
+          date: run.date ?? null,
+          status: run.status ?? "done",
+          genes: run.summary?.genes ?? 0,
+          total_bases: run.summary?.totalBases ?? 0,
+          scaffolds_count: run.summary?.scaffolds ?? 0,
+          elapsed_ms: run.elapsedMs ?? 0,
+        });
+      } catch {
+        // skip corrupt run files
+      }
+    }
+  }
+})();
+
+// ---------------------------------------------------------------------------
 
 const app = express();
 const upload = multer({ dest: uploadDir });
@@ -274,7 +393,8 @@ function makeRunName(fileName) {
   return `${stem}_${stamp}`;
 }
 
-function makeRunRecord(fileName, inputPath, predictionResult, elapsedMs, runId, modelEntry) {
+// Returns the lightweight metadata object saved to run.json.
+function makeRunMeta(fileName, inputPath, predictionResult, elapsedMs, runId, modelEntry) {
   return {
     id: runId,
     name: runId,
@@ -291,6 +411,12 @@ function makeRunRecord(fileName, inputPath, predictionResult, elapsedMs, runId, 
     elapsedMs,
     summary: predictionResult.summary,
     scaffolds: predictionResult.scaffolds,
+  };
+}
+
+// Returns the large data object saved to run_data.json.
+function makeRunData(predictionResult) {
+  return {
     predictions: predictionResult.predictions,
     confidenceByScaffold: predictionResult.confidenceByScaffold,
   };
@@ -409,19 +535,14 @@ function deleteDirectoryRecursive(dirPath) {
 }
 
 function listProjects() {
+  const runCounts = dbRunCountsByProject();
   return fs
     .readdirSync(projectsDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => {
       try {
         const meta = readProjectMeta(entry.name);
-        const runsPath = path.join(projectRoot(entry.name), "runs");
-        const runCount = fs.existsSync(runsPath)
-          ? fs
-              .readdirSync(runsPath, { withFileTypes: true })
-              .filter((runEntry) => runEntry.isDirectory()).length
-          : 0;
-        return { ...meta, runCount };
+        return { ...meta, runCount: runCounts.get(entry.name) ?? 0 };
       } catch {
         return null;
       }
@@ -456,6 +577,41 @@ function createProject(name, description = "") {
   return meta;
 }
 
+// Resolve run metadata for a directory entry using the SQLite index,
+// falling back to reading run.json for runs not yet in the index.
+function resolveRunEntry(projectId, runId, entryPath, relPath) {
+  const row = dbGetRun(projectId, runId);
+  if (row) {
+    return {
+      name: runId,
+      path: relPath,
+      type: "run",
+      status: row.status,
+      label: row.name,
+      fileName: row.file_name,
+      date: row.date,
+      genes: row.genes,
+      totalBases: row.total_bases,
+      elapsedMs: row.elapsed_ms,
+    };
+  }
+  // Fallback: read file (handles runs created before the index existed)
+  const runJsonPath = path.join(entryPath, "run.json");
+  const run = JSON.parse(fs.readFileSync(runJsonPath, "utf8"));
+  return {
+    name: runId,
+    path: relPath,
+    type: "run",
+    status: run.status,
+    label: run.name,
+    fileName: run.fileName,
+    date: run.date,
+    genes: run.summary?.genes ?? 0,
+    totalBases: run.summary?.totalBases ?? 0,
+    elapsedMs: run.elapsedMs ?? 0,
+  };
+}
+
 function listDirectory(projectId, relPath = "") {
   const dirPath = resolveProjectPath(projectId, relPath);
   if (!fs.existsSync(dirPath) || !fs.statSync(dirPath).isDirectory()) {
@@ -466,32 +622,22 @@ function listDirectory(projectId, relPath = "") {
     .readdirSync(dirPath, { withFileTypes: true })
     .map((entry) => {
       const entryPath = path.join(dirPath, entry.name);
+      const childRelPath = relPath ? `${relPath}/${entry.name}` : entry.name;
+
       if (entry.isDirectory()) {
         const runJsonPath = path.join(entryPath, "run.json");
         if (fs.existsSync(runJsonPath)) {
-          const run = JSON.parse(fs.readFileSync(runJsonPath, "utf8"));
-          return {
-            name: entry.name,
-            path: relPath ? `${relPath}/${entry.name}` : entry.name,
-            type: "run",
-            status: run.status,
-            label: run.name,
-            fileName: run.fileName,
-            date: run.date,
-            genes: run.summary?.genes ?? 0,
-            totalBases: run.summary?.totalBases ?? 0,
-            elapsedMs: run.elapsedMs ?? 0,
-          };
+          return resolveRunEntry(projectId, entry.name, entryPath, childRelPath);
         }
         return {
           name: entry.name,
-          path: relPath ? `${relPath}/${entry.name}` : entry.name,
+          path: childRelPath,
           type: "folder",
         };
       }
       return {
         name: entry.name,
-        path: relPath ? `${relPath}/${entry.name}` : entry.name,
+        path: childRelPath,
         type: "file",
         size: fs.statSync(entryPath).size,
       };
@@ -537,18 +683,7 @@ function buildProjectTree(projectId, relPath = "") {
       const runJsonPath = path.join(entryPath, "run.json");
 
       if (fs.existsSync(runJsonPath)) {
-        const run = JSON.parse(fs.readFileSync(runJsonPath, "utf8"));
-        return {
-          name: entry.name,
-          path: childRel,
-          type: "run",
-          status: run.status,
-          label: run.name,
-          fileName: run.fileName,
-          date: run.date,
-          genes: run.summary?.genes ?? 0,
-          totalBases: run.summary?.totalBases ?? 0,
-        };
+        return resolveRunEntry(projectId, entry.name, entryPath, childRel);
       }
 
       return {
@@ -568,12 +703,22 @@ function buildProjectTree(projectId, relPath = "") {
     });
 }
 
+// Read a run, merging metadata (run.json) with prediction data (run_data.json).
+// Supports both the new split format and the legacy single-file format.
 function readRun(projectId, runId) {
-  const runJsonPath = resolveProjectPath(projectId, path.join("runs", runId, "run.json"));
+  const runDir = resolveProjectPath(projectId, path.join("runs", runId));
+  const runJsonPath = path.join(runDir, "run.json");
   if (!fs.existsSync(runJsonPath)) {
     throw new Error("Run not found.");
   }
-  return JSON.parse(fs.readFileSync(runJsonPath, "utf8"));
+  const meta = JSON.parse(fs.readFileSync(runJsonPath, "utf8"));
+  const runDataPath = path.join(runDir, "run_data.json");
+  if (fs.existsSync(runDataPath)) {
+    const data = JSON.parse(fs.readFileSync(runDataPath, "utf8"));
+    return { ...meta, ...data };
+  }
+  // Legacy format: all data was stored in run.json
+  return meta;
 }
 
 async function executeProjectRun(projectId, inputRelPath, modelId = DEFAULT_MODEL_ID) {
@@ -624,7 +769,7 @@ async function executeProjectRun(projectId, inputRelPath, modelId = DEFAULT_MODE
       { cwd: repoRoot }
     );
     const predictionResult = JSON.parse(stdout);
-    const run = makeRunRecord(
+    const meta = makeRunMeta(
       path.basename(inputRelPath),
       inputRelPath.replace(/\\/g, "/"),
       predictionResult,
@@ -632,10 +777,13 @@ async function executeProjectRun(projectId, inputRelPath, modelId = DEFAULT_MODE
       runId,
       modelEntry
     );
-    fs.writeFileSync(path.join(runDir, "run.json"), JSON.stringify(run, null, 2));
+    const data = makeRunData(predictionResult);
+    fs.writeFileSync(path.join(runDir, "run.json"), JSON.stringify(meta, null, 2));
+    fs.writeFileSync(path.join(runDir, "run_data.json"), JSON.stringify(data, null, 2));
+    upsertRun(projectId, meta);
     fs.writeFileSync(statusPath, JSON.stringify({ status: "done" }, null, 2));
     touchProject(projectId);
-    return run;
+    return { ...meta, ...data };
   } catch (error) {
     fs.writeFileSync(
       statusPath,
@@ -1044,6 +1192,7 @@ app.patch("/api/projects/:projectId/runs", (req, res) => {
   try {
     const relPath = normalizeRunPath(req.body?.path ?? "");
     const projectId = req.params.projectId;
+    const oldRunId = relPath.split("/")[1];
     const runDir = resolveProjectPath(projectId, relPath);
     const runJsonPath = path.join(runDir, "run.json");
     if (!fs.existsSync(runDir) || !fs.existsSync(runJsonPath)) {
@@ -1068,6 +1217,7 @@ app.patch("/api/projects/:projectId/runs", (req, res) => {
     run.id = newName;
     run.name = newName;
     fs.writeFileSync(path.join(nextRunDir, "run.json"), JSON.stringify(run, null, 2));
+    dbRenameRun(projectId, oldRunId, newName, newName);
     touchProject(projectId);
     res.json({ label: run.name, name: newName, path: nextRelPath });
   } catch (error) {
@@ -1079,6 +1229,7 @@ app.delete("/api/projects/:projectId/runs", (req, res) => {
   try {
     const relPath = normalizeRunPath(req.body?.path ?? req.query?.path ?? "");
     const projectId = req.params.projectId;
+    const runId = relPath.split("/")[1];
     const runDir = resolveProjectPath(projectId, relPath);
     if (!fs.existsSync(runDir) || !fs.statSync(runDir).isDirectory()) {
       res.status(404).json({ error: "Run not found." });
@@ -1086,6 +1237,7 @@ app.delete("/api/projects/:projectId/runs", (req, res) => {
     }
 
     deleteDirectoryRecursive(runDir);
+    dbDeleteRun(projectId, runId);
     touchProject(projectId);
     res.json({ ok: true, path: relPath });
   } catch (error) {
