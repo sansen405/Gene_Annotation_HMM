@@ -1,0 +1,20 @@
+{
+  "tokens_supervised": 115091.0,
+  "last_loss": 1.3166264295578003,
+  "n_windows": 6336.0,
+  "scratch_finetune_bce": 0.8650487661361694,
+  "pretrained_finetune_bce": 0.8856850862503052,
+  "pretrained_better": false,
+  "fasta_files": [
+    "genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna",
+    "genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna",
+    "genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna",
+    "genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna",
+    "genome_data/fungi_diverse/a_fumigatus/train/a_fumigatus_train.fna",
+    "genome_data/fungi_diverse/a_nidulans/train/a_nidulans_train.fna",
+    "genome_data/fungi_diverse/b_cinerea/train/b_cinerea_train.fna",
+    "genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna"
+  ],
+  "max_bases_loaded": 3000000,
+  "note": "Laptop smoke: token count is measured; scale samples_per_seq for larger X."
+}

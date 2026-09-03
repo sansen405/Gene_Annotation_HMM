@@ -62,6 +62,27 @@ namespace gene_hmm {
         CHECK("ACGTA -> C exon emission counted", counts[context][idx(Nucleotide::C)] == 1);
     }
 
+    static void test_emission_markov5_intron_counts() {
+        cout << "\n[TEST 2b] Markov5 intron counts use 5-base context (V4.2)\n";
+
+        vector<Nucleotide> nucs = {
+            Nucleotide::A, Nucleotide::C, Nucleotide::G, Nucleotide::T,
+            Nucleotide::A, Nucleotide::G, Nucleotide::T
+        };
+        vector<State> states = {
+            State::INTERGENIC, State::INTERGENIC, State::INTERGENIC,
+            State::INTERGENIC, State::INTERGENIC, State::INTRON_1,
+            State::INTRON_2
+        };
+        vector<Chromosome_Range> ranges = {{"chr1", 0, nucs.size()}};
+
+        auto counts = Emission_Model::count_markov5_emissions(
+            states, nucs, ranges, {State::INTRON_1, State::INTRON_2, State::INTRON_3});
+        size_t context = test_encode_5mer(nucs, 5);
+        CHECK("ACGTA -> G intron emission counted under Markov5", counts[context][idx(Nucleotide::G)] == 1);
+        CHECK("Markov5 intron table has 1024 contexts", counts.size() == Emission_Model::MARKOV5_CONTEXTS);
+    }
+
     static void test_emission_log_probs() {
         cout << "\n[TEST 3] Emission log probabilities use additive smoothing\n";
 
@@ -142,6 +163,7 @@ namespace gene_hmm {
 
         test_emission_markov1_counts();
         test_emission_markov5_counts();
+        test_emission_markov5_intron_counts();
         test_emission_log_probs();
         test_emission_deterministic_codons();
         test_emission_dispatch_defaults();

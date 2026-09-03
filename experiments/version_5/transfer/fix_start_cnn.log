@@ -1,0 +1,101 @@
+[23:42:07] device: mps
+[23:42:07] starting start CNN score pipeline
+[23:42:07] model checkpoint: src/model/cnn/start/trained_models/fungi_diverse_span_start_cnn.pt
+[23:42:07] loading FASTA: genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna records=14 bases=9,448,102 elapsed=0.0s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna records=19 bases=36,782,235 elapsed=0.1s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna records=12 bases=16,746,424 elapsed=0.0s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna records=66 bases=40,820,752 elapsed=0.1s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna records=47 bases=21,391,202 elapsed=0.0s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_test.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_test.fna records=2 bases=2,623,224 elapsed=0.0s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/n_crassa/test/n_crassa_test.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/n_crassa/test/n_crassa_test.fna records=1 bases=4,255,303 elapsed=0.0s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_test.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_test.fna records=2 bases=2,144,769 elapsed=0.0s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna records=15 bases=5,266,365 elapsed=0.0s
+[23:42:08] loading FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna
+[23:42:08] loaded FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna records=15 bases=2,419,694 elapsed=0.0s
+[23:42:08] loading start sites from GFF: genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.gff
+[23:42:08] loaded start sites: starts=4,664 elapsed=0.0s
+[23:42:08] sampling examples from genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna
+[23:42:08] scanned negative candidates: 11% candidates=18,518
+[23:42:08] scanned negative candidates: 20% candidates=34,623
+[23:42:08] scanned negative candidates: 34% candidates=59,479
+[23:42:08] scanned negative candidates: 40% candidates=69,497
+[23:42:08] scanned negative candidates: 53% candidates=91,009
+[23:42:08] scanned negative candidates: 60% candidates=103,140
+[23:42:08] scanned negative candidates: 71% candidates=122,207
+[23:42:08] scanned negative candidates: 81% candidates=138,996
+[23:42:08] scanned negative candidates: 100% candidates=170,461
+[23:42:08] selected examples: positives=4,664 negatives=9,328
+[23:42:08] encoding windows: count=13,992 width=121
+[23:42:11] finished examples from genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna elapsed=2.8s
+[23:42:11] loading start sites from GFF: genome_data/fungi_diverse/n_crassa/train/n_crassa_train.gff
+[23:42:11] loaded start sites: starts=8,896 elapsed=0.1s
+[23:42:11] sampling examples from genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna
+[23:42:11] scanned negative candidates: 26% candidates=145,059
+[23:42:11] scanned negative candidates: 38% candidates=209,556
+[23:42:11] scanned negative candidates: 53% candidates=286,800
+[23:42:12] scanned negative candidates: 69% candidates=374,502
+[23:42:12] scanned negative candidates: 86% candidates=470,843
+[23:42:12] scanned negative candidates: 98% candidates=532,423
+[23:42:12] scanned negative candidates: 98% candidates=533,025
+[23:42:12] scanned negative candidates: 99% candidates=533,291
+[23:42:12] scanned negative candidates: 99% candidates=533,520
+[23:42:12] scanned negative candidates: 100% candidates=533,723
+[23:42:12] selected examples: positives=8,896 negatives=17,792
+[23:42:12] encoding windows: count=26,688 width=121
+[23:42:17] finished examples from genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna elapsed=6.1s
+[23:42:17] loading start sites from GFF: genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.gff
+[23:42:17] loaded start sites: starts=6,288 elapsed=0.1s
+[23:42:17] sampling examples from genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna
+[23:42:17] scanned negative candidates: 13% candidates=42,019
+[23:42:17] scanned negative candidates: 23% candidates=71,710
+[23:42:17] scanned negative candidates: 32% candidates=100,557
+[23:42:17] scanned negative candidates: 43% candidates=133,744
+[23:42:17] scanned negative candidates: 52% candidates=159,861
+[23:42:17] scanned negative candidates: 60% candidates=185,832
+[23:42:17] scanned negative candidates: 75% candidates=233,259
+[23:42:17] scanned negative candidates: 85% candidates=261,921
+[23:42:18] scanned negative candidates: 94% candidates=290,346
+[23:42:18] scanned negative candidates: 100% candidates=307,810
+[23:42:18] selected examples: positives=6,288 negatives=12,576
+[23:42:18] encoding windows: count=18,864 width=121
+[23:42:21] finished examples from genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna elapsed=3.9s
+[23:42:21] loading start sites from GFF: genome_data/fungi_diverse/r_delemar/train/r_delemar_train.gff
+[23:42:21] loaded start sites: starts=15,519 elapsed=0.1s
+[23:42:21] sampling examples from genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna
+[23:42:21] scanned negative candidates: 12% candidates=99,901
+[23:42:21] scanned negative candidates: 21% candidates=167,437
+[23:42:21] scanned negative candidates: 33% candidates=255,582
+[23:42:22] scanned negative candidates: 47% candidates=363,676
+[23:42:22] scanned negative candidates: 55% candidates=423,165
+[23:42:22] scanned negative candidates: 63% candidates=485,425
+[23:42:22] scanned negative candidates: 71% candidates=550,298
+[23:42:22] scanned negative candidates: 84% candidates=646,158
+[23:42:23] scanned negative candidates: 98% candidates=755,232
+[23:42:23] scanned negative candidates: 100% candidates=768,908
+[23:42:23] selected examples: positives=15,519 negatives=31,038
+[23:42:23] encoding windows: count=46,557 width=121
+[23:42:31] finished examples from genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna elapsed=9.7s
+[23:42:31] loading start sites from GFF: genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.gff
+[23:42:31] loaded start sites: starts=7,467 elapsed=0.1s
+[23:42:31] sampling examples from genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna
+[23:42:31] scanned negative candidates: 20% candidates=98,117
+[23:42:31] scanned negative candidates: 20% candidates=98,295
+[23:42:31] scanned negative candidates: 32% candidates=153,399
+[23:42:31] scanned negative candidates: 40% candidates=194,432
+[23:42:31] scanned negative candidates: 50% candidates=242,243
+[23:42:31] scanned negative candidates: 60% candidates=289,382
+[23:42:31] scanned negative candidates: 75% candidates=363,109
+[23:42:32] scanned negative candidates: 82% candidates=396,635
+[23:42:32] scanned negative candidates: 94% candidates=454,305
+[23:42:32] scanned negative candidates: 100% candidates=479,380
+[23:42:32] selected examples: positives=7,467 negatives=14,934
+[23:42:32] encoding windows: count=22,401 width=121

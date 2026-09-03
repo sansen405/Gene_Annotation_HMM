@@ -248,10 +248,10 @@ int main(int argc, char** argv) {
                 {"config", splice_cnn}
             }},
             {"markov1", {
-                {"intergenic", serialize_matrix(emission_model.intergenic_lp)},
-                {"intron", serialize_matrix(emission_model.intron_lp)}
+                {"intergenic", serialize_matrix(emission_model.intergenic_lp)}
             }},
             {"markov5", {
+                {"intron", serialize_matrix(emission_model.intron_lp)},
                 {"exon_frame_1", serialize_matrix(emission_model.exon_frame_lp[0])},
                 {"exon_frame_2", serialize_matrix(emission_model.exon_frame_lp[1])},
                 {"exon_frame_3", serialize_matrix(emission_model.exon_frame_lp[2])}

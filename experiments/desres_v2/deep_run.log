@@ -1,0 +1,3 @@
+[2026-08-01 16:42:57] ===== DESRES V2 DEEP RUN START =====
+[2026-08-01 16:42:57] epochs=4 neg=3 ssl_max_bases=25000000 ssl_samples=64 backbones=bilstm transformer
+[2026-08-01 16:42:57] === Phase0 train/score backbone=bilstm (TEST strands only) ===

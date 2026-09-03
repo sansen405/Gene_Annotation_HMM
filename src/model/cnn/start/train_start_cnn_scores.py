@@ -579,6 +579,12 @@ def main() -> None:
     parser.add_argument("--negatives-per-positive", default=5, type=int)
     parser.add_argument("--require-3n-cds", dest="require_3n_cds", action="store_true")
     parser.add_argument("--allow-non-3n-cds", dest="require_3n_cds", action="store_false")
+    parser.add_argument(
+        "--backbone",
+        default="dilated_cnn",
+        choices=["dilated_cnn", "bilstm", "transformer"],
+        help="Neural emission backbone (DESRES V2).",
+    )
     parser.set_defaults(require_3n_cds=None)
     args = parser.parse_args()
 
@@ -587,9 +593,9 @@ def main() -> None:
         args.require_3n_cds = True
     validate_required_args(args)
 
-    global torch, nn, DataLoader, TensorDataset, StartCNN, one_hot_encode_windows
+    global torch, nn, DataLoader, TensorDataset, StartCNN, one_hot_encode_windows, build_start_model
     import torch
-    from start_cnn_network import StartCNN, one_hot_encode_windows
+    from start_cnn_network import StartCNN, build_start_model, one_hot_encode_windows
     from torch import nn
     from torch.utils.data import DataLoader, TensorDataset
 
@@ -602,13 +608,19 @@ def main() -> None:
 
     log("starting start CNN score pipeline")
     log(f"model checkpoint: {args.model_out}")
+    log(f"backbone: {args.backbone}")
     train_datasets = [read_fasta(path) for path in args.train_fasta]
     test_datasets = [read_fasta(path) for path in args.test_fasta]
-    model = StartCNN(window_size=args.radius * 2 + 1)
+    model = build_start_model(window_size=args.radius * 2 + 1, backbone=args.backbone)
 
     if args.model_out.exists():
         log(f"loading existing CNN checkpoint: {args.model_out}")
         checkpoint = torch.load(args.model_out, map_location="cpu")
+        ckpt_backbone = checkpoint.get("backbone", "dilated_cnn")
+        if ckpt_backbone != args.backbone:
+            log(f"warning: checkpoint backbone={ckpt_backbone} != --backbone={args.backbone}; rebuilding")
+            model = build_start_model(window_size=args.radius * 2 + 1, backbone=ckpt_backbone)
+            args.backbone = ckpt_backbone
         model.load_state_dict(checkpoint["state_dict"])
         model = model.to(device)
         calibration = Calibration(**checkpoint["calibration"])
@@ -644,6 +656,7 @@ def main() -> None:
         torch.save(
             {
                 "state_dict": {k: v.cpu() for k, v in model.state_dict().items()},
+                "backbone": args.backbone,
                 "calibration": {
                     "temperature": calibration.temperature,
                     "start_prior_logit": calibration.start_prior_logit,

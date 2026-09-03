@@ -1,4 +1,5 @@
 #include "../decoding/Forward_Backward.hpp"
+#include "../decoding/Intron_Duration.hpp"
 #include "../decoding/Viterbi.hpp"
 #include "../genome_profiles/Genome_Profile.hpp"
 #include "../model/emission/Emission_Model.hpp"
@@ -8,6 +9,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <nlohmann/json.hpp>
 #include <set>
 #include <sstream>
@@ -22,6 +24,9 @@ using namespace gene_hmm;
 using namespace std;
 
 Log_Prob gene_start_penalty = 1.0;
+vector<Log_Prob> intron_length_log_probs;
+size_t max_intron_body_length = numeric_limits<size_t>::max();
+size_t min_intron_body_length = 0;
 
 struct Training_Data {
     vector<Nucleotide> nucleotides;
@@ -309,6 +314,28 @@ json confidence_for_range_minus(
     return values;
 }
 
+vector<size_t> collect_intron_body_lengths(
+    const vector<State>& states,
+    const vector<Chromosome_Range>& ranges)
+{
+    vector<size_t> lengths;
+    for(const auto& range : ranges){
+        size_t i = range.start;
+        while(i < range.end){
+            if(!is_intron_body(states[i])){
+                i++;
+                continue;
+            }
+            size_t start = i;
+            while(i < range.end && is_intron_body(states[i])){
+                i++;
+            }
+            lengths.push_back(i - start);
+        }
+    }
+    return lengths;
+}
+
 void collect_plus_genes(
     vector<Gene_Prediction>& genes,
     const vector<Nucleotide>& chromosome_nucleotides,
@@ -346,7 +373,8 @@ void collect_plus_genes(
 
         Log_Prob score = Viterbi::path_log_prob(
             chromosome_states, chromosome_nucleotides, transition_log_probs,
-            emission_model, gene_start_penalty, gene_start, gene_end);
+            emission_model, gene_start_penalty, gene_start, gene_end,
+            intron_length_log_probs);
 
         genes.push_back({gene_start, gene_end, score, prediction});
     }
@@ -395,7 +423,8 @@ void collect_minus_genes(
 
         Log_Prob score = Viterbi::path_log_prob(
             chromosome_states, chromosome_nucleotides, transition_log_probs,
-            emission_model, gene_start_penalty, gene_start, gene_end);
+            emission_model, gene_start_penalty, gene_start, gene_end,
+            intron_length_log_probs);
 
         genes.push_back({fwd_start, fwd_end, score, prediction});
     }
@@ -463,6 +492,16 @@ int main(int argc, char** argv) {
         auto transition_log_probs = Transition_Model::compute_log_probs(training.states, train_ranges);
         Emission_Model emission_model = train_emissions(training.states, training.nucleotides, train_ranges);
 
+        // Same HSMM duration table as validation: train histogram capped at p95.
+        vector<size_t> train_intron_body_lengths =
+            collect_intron_body_lengths(training.states, train_ranges);
+        max_intron_body_length = percentile_length(train_intron_body_lengths, 0.95);
+        min_intron_body_length = 0;
+        intron_length_log_probs = build_intron_length_log_probs(
+            train_intron_body_lengths,
+            max_intron_body_length,
+            Intron_Duration_Kind::Histogram);
+
         vector<Nucleotide> input_nucleotides = FNA_Parser::parse_sequence(input_fna);
         vector<Chromosome_Range> input_ranges = FNA_Parser::get_chromosome_ranges(input_fna);
         if(splice_cnn_scores_path.empty()){
@@ -522,15 +561,18 @@ int main(int argc, char** argv) {
                 chromosome_nucleotides,
                 transition_log_probs,
                 emission_model,
-                0,
-                numeric_limits<size_t>::max(),
-                gene_start_penalty);
+                min_intron_body_length,
+                max_intron_body_length,
+                gene_start_penalty,
+                intron_length_log_probs);
             vector<double> chromosome_confidence = Forward_Backward::confidence(
                 chromosome_nucleotides,
                 chromosome_states,
                 transition_log_probs,
                 emission_model,
-                gene_start_penalty);
+                gene_start_penalty,
+                intron_length_log_probs,
+                min_intron_body_length);
 
             result["scaffolds"].push_back({
                 {"name", range.name},
@@ -561,15 +603,18 @@ int main(int argc, char** argv) {
                     revcomp_nucleotides,
                     transition_log_probs,
                     emission_model_minus,
-                    0,
-                    numeric_limits<size_t>::max(),
-                    gene_start_penalty);
+                    min_intron_body_length,
+                    max_intron_body_length,
+                    gene_start_penalty,
+                    intron_length_log_probs);
                 vector<double> minus_confidence = Forward_Backward::confidence(
                     revcomp_nucleotides,
                     minus_states,
                     transition_log_probs,
                     emission_model_minus,
-                    gene_start_penalty);
+                    gene_start_penalty,
+                    intron_length_log_probs,
+                    min_intron_body_length);
                 collect_minus_genes(
                     scaffold_genes,
                     revcomp_nucleotides,

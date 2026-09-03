@@ -37,3 +37,16 @@ src/model/cnn/**/*_scores.tsv
 
 # Generated validation outputs can exceed GitHub's file size limit.
 validation/results/fission_yeasts_cnn_s_pombe.txt
+
+# Build trees and regenerable Augustus GFF dumps (keep combined.txt).
+build/
+.venv/
+validation/baselines/augustus/*.gff
+validation/baselines/augustus/*.log
+validation/baselines/helixer/*.gff
+validation/baselines/helixer/*.log
+validation/baselines/helixer/models/
+validation/baselines/helixer/fetch_models.log
+
+build_cmake/
+.cursor/

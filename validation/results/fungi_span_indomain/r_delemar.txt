@@ -1,0 +1,37 @@
+
+=== Test: r_delemar:NW_027137853.1,r_delemar:NW_027137852.1,r_delemar:NW_027137844.1,r_delemar:NW_027137841.1,r_delemar:NW_027137839.1,r_delemar:NW_027137838.1,r_delemar:NW_027137904.1,r_delemar:NW_027137895.1,r_delemar:NW_027137894.1,r_delemar:NW_027137891.1,r_delemar:NW_027137881.1,r_delemar:NW_027137870.1,r_delemar:NW_027137862.1,r_delemar:NW_027137859.1,r_delemar:NW_027137856.1 ===
+Metric                               Value
+Evaluated bases                    4026964
+Exact 21-state accuracy             0.9116
+Illegal transitions                      0
+Predicted gene intervals               778
+Gold gene intervals                    909
+Intron length cap p95                  201
+Gene start penalty                  1.0000
+Intron duration model            histogram
+Duration table size                    202
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                     -6.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.8484      0.8981      0.8726      0.9382    851342    152125     96544   2926953
+intron            0.6108      0.5218      0.5628      0.9666     86614     55187     79368   3805795
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.5450      0.4664         424         778         909
+stop              0.6067      0.5193         472         778         909
+donor             0.6507      0.5746        1194        1835        2078
+acceptor          0.6490      0.5731        1191        1835        2078
+
+Structure Metrics (exact interval match):
+Boundary       Precision      Recall       Exact   Predicted        Gold
+exon              0.5048      0.4416        1319        2613        2987
+gene              0.3676      0.3146         286         778         909
+gene_sens         0.3146    (recall)
+gene_spec         0.3676 (precision)

@@ -1,3 +1,4 @@
+#include "../src/decoding/Intron_Duration.hpp"
 #include "../src/decoding/Viterbi.hpp"
 #include "../src/genome_profiles/Genome_Profile.hpp"
 #include "../src/model/emission/Emission_Model.hpp"
@@ -17,6 +18,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace {
@@ -26,6 +28,8 @@ using namespace std;
 
 Log_Prob gene_start_penalty = 1.0;
 vector<Log_Prob> intron_length_log_probs;
+Intron_Duration_Kind duration_model_kind = Intron_Duration_Kind::Histogram;
+bool use_structure_objective = false;
 string splice_cnn_scores_path;
 Log_Prob donor_cnn_scale = 1.0;
 Log_Prob donor_cnn_bias = 0.0;
@@ -36,6 +40,7 @@ Log_Prob start_cnn_scale = 1.0;
 Log_Prob start_cnn_bias = 0.0;
 bool tune_cnn_calibration = false;
 bool tune_start_calibration = false;
+bool tune_gene_start_penalty_flag = false;
 bool tune_only = false;
 size_t tune_subset_ranges = 64;
 bool collect_start_positions = false;
@@ -74,6 +79,11 @@ struct Validation_Result {
     size_t acceptor_predicted = 0;
     size_t acceptor_gold = 0;
     size_t acceptor_exact = 0;
+    // Exact structure: contiguous coding runs = exons; contiguous gene runs = genes.
+    size_t exon_predicted = 0;
+    size_t exon_gold = 0;
+    size_t exon_exact = 0;
+    size_t gene_exact = 0;
     vector<Interval> predicted_gene_intervals;
     vector<Interval> gold_gene_intervals;
     vector<long> pred_start_signed_offset;
@@ -147,6 +157,19 @@ double calibration_objective(const Validation_Result& result) {
         binary_f1(result.intron_total) +
         boundary_f1(result.donor_exact, result.donor_predicted, result.donor_gold) +
         boundary_f1(result.acceptor_exact, result.acceptor_predicted, result.acceptor_gold)) / 3.0;
+}
+
+// Structure-first objective: exact exon F1 and exact gene F1 (harmonic mean of P/R each).
+double structure_objective(const Validation_Result& result) {
+    double exon_f1 = boundary_f1(result.exon_exact, result.exon_predicted, result.exon_gold);
+    double gene_precision = divide(result.gene_exact, result.predicted_gene_intervals.size());
+    double gene_recall = divide(result.gene_exact, result.gold_gene_intervals.size());
+    double gene_f1 = f1(gene_precision, gene_recall);
+    return 0.5 * (exon_f1 + gene_f1);
+}
+
+double active_calibration_objective(const Validation_Result& result) {
+    return use_structure_objective ? structure_objective(result) : calibration_objective(result);
 }
 
 double start_calibration_objective(const Validation_Result& result) {
@@ -360,44 +383,6 @@ vector<size_t> collect_intron_body_lengths(
     return lengths;
 }
 
-size_t percentile_length(vector<size_t> lengths, double percentile) {
-    if (lengths.empty()) {
-        return numeric_limits<size_t>::max();
-    }
-
-    sort(lengths.begin(), lengths.end());
-    size_t index = static_cast<size_t>(percentile * static_cast<double>(lengths.size() - 1));
-    return lengths[index];
-}
-
-vector<Log_Prob> build_intron_length_log_probs(
-    const vector<size_t>& lengths,
-    size_t max_length)
-{
-    if (max_length == 0 || lengths.empty()) {
-        return {};
-    }
-
-    vector<double> counts(max_length + 1, 1.0);
-    counts[0] = 0.0;
-    for (size_t length : lengths) {
-        if (length >= 1 && length <= max_length) {
-            counts[length] += 1.0;
-        }
-    }
-
-    double total = 0.0;
-    for (size_t length = 1; length <= max_length; ++length) {
-        total += counts[length];
-    }
-
-    vector<Log_Prob> log_probs(max_length + 1, LOG_ZERO);
-    for (size_t length = 1; length <= max_length; ++length) {
-        log_probs[length] = log(counts[length] / total);
-    }
-    return log_probs;
-}
-
 vector<Interval> collect_intervals(
     const vector<State>& states,
     const string& chromosome,
@@ -418,6 +403,23 @@ vector<Interval> collect_intervals(
         intervals.push_back({chromosome, start, i});
     }
     return intervals;
+}
+
+size_t count_exact_interval_matches(
+    const vector<Interval>& predicted,
+    const vector<Interval>& gold)
+{
+    set<tuple<string, size_t, size_t>> gold_set;
+    for (const auto& interval : gold) {
+        gold_set.emplace(interval.chromosome, interval.start, interval.end);
+    }
+    size_t exact = 0;
+    for (const auto& interval : predicted) {
+        if (gold_set.count({interval.chromosome, interval.start, interval.end})) {
+            exact++;
+        }
+    }
+    return exact;
 }
 
 vector<Interval> collect_error_intervals(
@@ -620,6 +622,10 @@ Validation_Result merge_validation_results(const Validation_Result& a, const Val
     merged.acceptor_predicted += b.acceptor_predicted;
     merged.acceptor_gold += b.acceptor_gold;
     merged.acceptor_exact += b.acceptor_exact;
+    merged.exon_predicted += b.exon_predicted;
+    merged.exon_gold += b.exon_gold;
+    merged.exon_exact += b.exon_exact;
+    merged.gene_exact += b.gene_exact;
     merged.predicted_gene_intervals.insert(
         merged.predicted_gene_intervals.end(),
         b.predicted_gene_intervals.begin(),
@@ -726,6 +732,9 @@ void print_usage(const string& program_name) {
     cerr << "  --tune-only              Stop after selecting CNN calibration\n";
     cerr << "  --tune-subset-ranges N   Usable evaluation intervals for tuning, default 64\n";
     cerr << "  --gene-start-penalty VALUE  Log-prob penalty on INTERGENIC -> START_CODON_1, default 1.0\n";
+    cerr << "  --duration-model KIND      Intron duration: histogram (default), nb, or none\n";
+    cerr << "  --structure-objective      Use exact exon/gene F1 for --tune-cnn-calibration / penalty sweeps\n";
+    cerr << "  --tune-gene-start-penalty  Sweep gene-start penalty on eval subset (diagnostic; prefer train-fit)\n";
     cerr << "  --start-offset-report PATH  Write a start-boundary offset diagnostic (per-species + combined) to PATH\n";
     cerr << "  --results-dir DIR        Write combined.txt and per-species result files into DIR\n";
     cerr << "  --start-window-left N    Start-codon PSSM bases upstream of the ATG (retrains the PSSM), default 6\n";
@@ -767,6 +776,14 @@ Genome_Profile parse_args(int argc, char** argv) {
         }
         if (arg == "--tune-cnn-calibration") {
             tune_cnn_calibration = true;
+            continue;
+        }
+        if (arg == "--tune-gene-start-penalty") {
+            tune_gene_start_penalty_flag = true;
+            continue;
+        }
+        if (arg == "--structure-objective") {
+            use_structure_objective = true;
             continue;
         }
         if (arg == "--tune-only") {
@@ -818,6 +835,19 @@ Genome_Profile parse_args(int argc, char** argv) {
             tune_subset_ranges = stoull(value);
         } else if (arg == "--gene-start-penalty") {
             gene_start_penalty = stod(value);
+        } else if (arg == "--duration-model") {
+            if (value == "histogram" || value == "hist") {
+                duration_model_kind = Intron_Duration_Kind::Histogram;
+            } else if (value == "nb" || value == "negative-binomial" || value == "negbin") {
+                duration_model_kind = Intron_Duration_Kind::NegativeBinomial;
+            } else if (value == "none" || value == "geometric" || value == "off") {
+                duration_model_kind = Intron_Duration_Kind::None;
+            } else {
+                cerr << "Unknown --duration-model: " << value
+                     << " (expected histogram, nb, or none)\n";
+                print_usage(argv[0]);
+                exit(1);
+            }
         } else if (arg == "--start-offset-report") {
             start_offset_report_path = value;
         } else if (arg == "--results-dir") {
@@ -1060,6 +1090,14 @@ Validation_Result decode_validation(
         if (collect_gene_intervals) {
             vector<Interval> pred_genes = collect_intervals(chromosome_predicted, range.name, is_gene);
             vector<Interval> gold_genes = collect_intervals(chromosome_gold, range.name, is_gene);
+            vector<Interval> pred_exons = collect_intervals(chromosome_predicted, range.name, is_coding);
+            vector<Interval> gold_exons = collect_intervals(chromosome_gold, range.name, is_coding);
+
+            result.exon_predicted += pred_exons.size();
+            result.exon_gold += gold_exons.size();
+            result.exon_exact += count_exact_interval_matches(pred_exons, gold_exons);
+            result.gene_exact += count_exact_interval_matches(pred_genes, gold_genes);
+
             result.predicted_gene_intervals.insert(
                 result.predicted_gene_intervals.end(),
                 pred_genes.begin(),
@@ -1137,7 +1175,9 @@ void tune_splice_cnn_calibration(
     const size_t total = candidates.size();
 
     cout << "\nTuning CNN calibration on evaluation labels"
-         << " objective=(intron F1 + donor boundary F1 + acceptor boundary F1)/3\n";
+         << (use_structure_objective
+                ? " objective=0.5*(exact exon F1 + exact gene F1)\n"
+                : " objective=(intron F1 + donor boundary F1 + acceptor boundary F1)/3\n");
     cout << "Tuning subset: " << tuning_ranges.size()
          << "/" << eval_ranges.size()
          << " usable evaluation intervals\n";
@@ -1154,8 +1194,8 @@ void tune_splice_cnn_calibration(
             eval_data,
             tuning_ranges,
             max_intron_body_length,
-            false);
-        double objective = calibration_objective(result);
+            use_structure_objective);
+        double objective = active_calibration_objective(result);
         tried++;
 
         cout << "  candidate " << tried << "/" << total
@@ -1198,6 +1238,57 @@ void tune_splice_cnn_calibration(
          << " acceptor_bias=" << acceptor_cnn_bias
          << " objective=" << best_objective
          << "\n";
+}
+
+void tune_gene_start_penalty(
+    Emission_Model& emission_model,
+    const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+    const Sequence_Data& eval_data,
+    const vector<Chromosome_Range>& eval_ranges,
+    size_t max_intron_body_length)
+{
+    const vector<Log_Prob> penalties{0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0};
+    const vector<Chromosome_Range> tuning_ranges =
+        evenly_spaced_ranges(eval_ranges, tune_subset_ranges);
+
+    double best_objective = -1.0;
+    Log_Prob best_penalty = gene_start_penalty;
+    const Log_Prob saved_penalty = gene_start_penalty;
+
+    cout << "\nTuning gene-start penalty"
+         << (use_structure_objective
+                ? " objective=0.5*(exact exon F1 + exact gene F1)\n"
+                : " objective=(intron F1 + donor boundary F1 + acceptor boundary F1)/3\n");
+    cout << "Tuning subset: " << tuning_ranges.size()
+         << "/" << eval_ranges.size()
+         << " usable evaluation intervals\n";
+    cout << "NOTE: Prefer train-fit operating points; eval-label sweeps are diagnostic only.\n";
+
+    for (Log_Prob penalty : penalties) {
+        gene_start_penalty = penalty;
+        Validation_Result result = decode_validation(
+            emission_model,
+            transition_log_probs,
+            eval_data,
+            tuning_ranges,
+            max_intron_body_length,
+            use_structure_objective);
+        double objective = active_calibration_objective(result);
+        cout << "  penalty=" << fixed << setprecision(2) << penalty
+             << " objective=" << setprecision(4) << objective
+             << " intron_f1=" << binary_f1(result.intron_total)
+             << " exon_exact_f1=" << boundary_f1(result.exon_exact, result.exon_predicted, result.exon_gold)
+             << "\n";
+        if (objective > best_objective) {
+            best_objective = objective;
+            best_penalty = penalty;
+        }
+    }
+
+    gene_start_penalty = best_penalty;
+    cout << "Selected gene-start penalty=" << gene_start_penalty
+         << " objective=" << best_objective
+         << " (was " << saved_penalty << ")\n";
 }
 
 void tune_start_cnn_calibration(
@@ -1285,6 +1376,13 @@ void write_validation_report(
     out << left << setw(28) << "Gold gene intervals" << right << setw(14) << result.gold_gene_intervals.size() << "\n";
     out << left << setw(28) << "Intron length cap p95" << right << setw(14) << max_intron_body_length << "\n";
     out << left << setw(28) << "Gene start penalty" << right << setw(14) << gene_start_penalty << "\n";
+    {
+        string duration_label = "histogram";
+        if (duration_model_kind == Intron_Duration_Kind::NegativeBinomial) duration_label = "negbin";
+        if (duration_model_kind == Intron_Duration_Kind::None) duration_label = "none/geometric";
+        out << left << setw(28) << "Intron duration model" << right << setw(14) << duration_label << "\n";
+        out << left << setw(28) << "Duration table size" << right << setw(14) << intron_length_log_probs.size() << "\n";
+    }
     out << left << setw(28) << "CNN donor scale" << right << setw(14) << donor_cnn_scale << "\n";
     out << left << setw(28) << "CNN donor bias" << right << setw(14) << donor_cnn_bias << "\n";
     out << left << setw(28) << "CNN acceptor scale" << right << setw(14) << acceptor_cnn_scale << "\n";
@@ -1303,6 +1401,24 @@ void write_validation_report(
     print_boundary_metrics_row(out, "stop", result.stop_exact, result.stop_predicted, result.stop_gold);
     print_boundary_metrics_row(out, "donor", result.donor_exact, result.donor_predicted, result.donor_gold);
     print_boundary_metrics_row(out, "acceptor", result.acceptor_exact, result.acceptor_predicted, result.acceptor_gold);
+
+    out << "\nStructure Metrics (exact interval match):\n";
+    print_boundary_metrics_header(out);
+    print_boundary_metrics_row(out, "exon", result.exon_exact, result.exon_predicted, result.exon_gold);
+    print_boundary_metrics_row(
+        out,
+        "gene",
+        result.gene_exact,
+        result.predicted_gene_intervals.size(),
+        result.gold_gene_intervals.size());
+    out << left << setw(12) << "gene_sens"
+         << right << setw(12) << divide(result.gene_exact, result.gold_gene_intervals.size())
+         << setw(12) << "(recall)"
+         << "\n";
+    out << left << setw(12) << "gene_spec"
+         << right << setw(12) << divide(result.gene_exact, result.predicted_gene_intervals.size())
+         << setw(12) << "(precision)"
+         << "\n";
 }
 
 }
@@ -1390,7 +1506,10 @@ int main(int argc, char** argv) {
 
     vector<size_t> train_intron_body_lengths = collect_intron_body_lengths(train_data.states, train_ranges);
     size_t max_intron_body_length = percentile_length(train_intron_body_lengths, 0.95);
-    intron_length_log_probs = build_intron_length_log_probs(train_intron_body_lengths, max_intron_body_length);
+    intron_length_log_probs = build_intron_length_log_probs(
+        train_intron_body_lengths,
+        max_intron_body_length,
+        duration_model_kind);
 
     if (tune_start_calibration) {
         const auto& splice_train_paths = gene_hmm::profile.splice_cnn.train_score_paths;
@@ -1440,6 +1559,18 @@ int main(int argc, char** argv) {
 
     if (tune_cnn_calibration) {
         tune_splice_cnn_calibration(
+            emission_model,
+            transition_log_probs,
+            eval_data,
+            eval_ranges,
+            max_intron_body_length);
+        if (tune_only) {
+            return 0;
+        }
+    }
+
+    if (tune_gene_start_penalty_flag) {
+        tune_gene_start_penalty(
             emission_model,
             transition_log_probs,
             eval_data,

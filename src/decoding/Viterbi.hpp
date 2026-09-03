@@ -33,7 +33,8 @@ namespace gene_hmm {
                 size_t max_intron_body_length,
                 Log_Prob gene_start_penalty);
 
-            //when intron_length_log_prob is non-empty, intron duration is semi-markov: geometric self-loop cost dropped, log P(length) charged once at close
+            // When intron_length_log_prob is non-empty, intron duration is semi-Markov:
+            // geometric self-loop cost dropped, log P(length) charged once at close.
             static vector<State> decode(const vector<Nucleotide>& nucleotides,
                 const Transition_Model::Log_Prob_Matrix& transition_log_probs,
                 const Emission_Model& emission_model,
@@ -50,7 +51,17 @@ namespace gene_hmm {
                 size_t start,
                 size_t end);
 
+            // HSMM path score: drops intron self-loop transition cost and charges
+            // log P(L) once on intron-body -> acceptor (same generative story as decode).
+            static Log_Prob path_log_prob(const vector<State>& states,
+                const vector<Nucleotide>& nucleotides,
+                const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+                const Emission_Model& emission_model,
+                Log_Prob gene_start_penalty,
+                size_t start,
+                size_t end,
+                const vector<Log_Prob>& intron_length_log_prob);
+
 
     };
 }
-

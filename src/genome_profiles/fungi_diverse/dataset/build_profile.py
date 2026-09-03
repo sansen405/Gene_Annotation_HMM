@@ -161,7 +161,7 @@ def main() -> None:
         },
         "emissions": {
             "INTERGENIC":  {"type": "markov", "order": 1},
-            "INTRON":      {"type": "markov", "order": 1},
+            "INTRON":      {"type": "markov", "order": 5},
             "EXON_FRAME":  {"type": "markov", "order": 5, "frame_tied": True},
             "DONOR":       {"type": "pssm", "window_left": 3, "window_right": 6},
             "ACCEPTOR":    {"type": "pssm", "window_left": 15, "window_right": 3},

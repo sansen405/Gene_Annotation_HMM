@@ -1,0 +1,48 @@
+[23:21:37] device: cpu
+[23:21:37] starting start CNN score pipeline
+[23:21:37] model checkpoint: src/model/cnn/start/trained_models/fission_yeasts_start_cnn.pt
+[23:21:37] loading FASTA: genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna
+[23:21:37] loaded FASTA: genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna records=15 bases=5,266,365 elapsed=0.0s
+[23:21:37] loading FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna
+[23:21:37] loaded FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna records=15 bases=2,419,694 elapsed=0.0s
+[23:21:37] loading FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna
+[23:21:37] loaded FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna records=15 bases=2,419,694 elapsed=0.0s
+[23:21:37] loading existing CNN checkpoint: src/model/cnn/start/trained_models/fission_yeasts_start_cnn.pt
+[23:21:37] loaded calibration: temperature=1.2235 start_prior_logit=-1.6032
+[23:21:37] writing sparse scores: input=genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna output=genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv bases=5,266,365 candidates=100,652 strand=+
+[23:21:54] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 11%
+[23:22:13] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 23%
+[23:22:26] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 32%
+[23:22:49] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 47%
+[23:23:01] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 55%
+[23:23:13] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 63%
+[23:23:26] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 72%
+[23:23:39] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 80%
+[23:24:00] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 95%
+[23:24:06] sparse score writing progress for genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv: 100%
+[23:24:06] finished sparse scores: genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv elapsed=148.8s
+[23:24:06] writing sparse scores: input=genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna output=genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv bases=2,419,694 candidates=54,886 strand=+
+[23:24:18] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 14%
+[23:24:27] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 29%
+[23:24:36] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 41%
+[23:24:36] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 41%
+[23:24:46] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 56%
+[23:24:56] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 71%
+[23:24:57] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 73%
+[23:25:09] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 89%
+[23:25:13] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 97%
+[23:25:16] sparse score writing progress for genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv: 100%
+[23:25:16] finished sparse scores: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv elapsed=69.5s
+[23:25:16] writing sparse scores: input=genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna output=/tmp/fungi_dummy_start2.tsv bases=2,419,694 candidates=54,886 strand=+
+[23:25:27] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 14%
+[23:25:37] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 29%
+[23:25:44] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 41%
+[23:25:44] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 41%
+[23:25:56] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 56%
+[23:26:06] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 71%
+[23:26:07] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 73%
+[23:26:19] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 89%
+[23:26:25] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 97%
+[23:26:26] sparse score writing progress for /tmp/fungi_dummy_start2.tsv: 100%
+[23:26:26] finished sparse scores: /tmp/fungi_dummy_start2.tsv elapsed=70.5s
+[23:26:26] finished start CNN score pipeline

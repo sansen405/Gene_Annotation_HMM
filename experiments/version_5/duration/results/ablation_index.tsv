@@ -1,0 +1,4 @@
+duration_model	report
+none	experiments/version_5/duration/results/none/combined.txt
+histogram	experiments/version_5/duration/results/histogram/combined.txt
+nb	experiments/version_5/duration/results/nb/combined.txt

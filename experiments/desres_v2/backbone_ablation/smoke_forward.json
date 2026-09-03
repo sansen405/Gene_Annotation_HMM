@@ -1,0 +1,41 @@
+[
+  {
+    "backbone": "dilated_cnn",
+    "splice_out_shape": [
+      32,
+      2
+    ],
+    "start_out_shape": [
+      32,
+      1
+    ],
+    "params": 707715,
+    "forward_s": 0.0939
+  },
+  {
+    "backbone": "bilstm",
+    "splice_out_shape": [
+      32,
+      2
+    ],
+    "start_out_shape": [
+      32,
+      1
+    ],
+    "params": 1981059,
+    "forward_s": 0.0835
+  },
+  {
+    "backbone": "transformer",
+    "splice_out_shape": [
+      32,
+      2
+    ],
+    "start_out_shape": [
+      32,
+      1
+    ],
+    "params": 1290243,
+    "forward_s": 0.0191
+  }
+]

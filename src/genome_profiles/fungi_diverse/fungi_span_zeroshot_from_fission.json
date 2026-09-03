@@ -1,0 +1,198 @@
+{
+    "name": "fungi_span_zeroshot_from_fission",
+    "description": "Zero-shot: HMM trained on fission yeasts, evaluated on fungi_diverse_span holdouts",
+    "dataset": {
+        "species": [
+            {
+                "name": "s_cerevisiae",
+                "source_fasta": "genome_data/fungi_diverse/s_cerevisiae/full/s_cerevisiae_full.fna",
+                "source_gff": "genome_data/fungi_diverse/s_cerevisiae/full/s_cerevisiae_full.gff",
+                "train_fasta": "genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna",
+                "train_gff": "genome_data/fission_yeasts/s_pombe/train/s_pombe_train.gff",
+                "test_fasta": "genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_test.fna",
+                "test_gff": "genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_test.gff",
+                "test_chromosomes": [
+                    "NC_001147.6",
+                    "NC_001136.10"
+                ],
+                "excluded_chromosomes": [
+                    "NC_001224.1"
+                ]
+            },
+            {
+                "name": "n_crassa",
+                "source_fasta": "genome_data/fungi_diverse/n_crassa/full/n_crassa_full.fna",
+                "source_gff": "genome_data/fungi_diverse/n_crassa/full/n_crassa_full.gff",
+                "train_fasta": "genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna",
+                "train_gff": "genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.gff",
+                "test_fasta": "genome_data/fungi_diverse/n_crassa/test/n_crassa_test.fna",
+                "test_gff": "genome_data/fungi_diverse/n_crassa/test/n_crassa_test.gff",
+                "test_chromosomes": [
+                    "NC_026507.1"
+                ],
+                "excluded_chromosomes": [
+                    "NC_026614.1"
+                ]
+            },
+            {
+                "name": "cr_neoformans",
+                "source_fasta": "genome_data/fungi_diverse/cr_neoformans/full/cr_neoformans_full.fna",
+                "source_gff": "genome_data/fungi_diverse/cr_neoformans/full/cr_neoformans_full.gff",
+                "train_fasta": "genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna",
+                "train_gff": "genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.gff",
+                "test_fasta": "genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_test.fna",
+                "test_gff": "genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_test.gff",
+                "test_chromosomes": [
+                    "NC_026748.1",
+                    "NC_026754.1"
+                ],
+                "excluded_chromosomes": [
+                    "NC_018792.1"
+                ]
+            },
+            {
+                "name": "r_delemar",
+                "source_fasta": "genome_data/fungi_diverse/r_delemar/full/r_delemar_full.fna",
+                "source_gff": "genome_data/fungi_diverse/r_delemar/full/r_delemar_full.gff",
+                "train_fasta": "genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna",
+                "train_gff": "genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.gff",
+                "test_fasta": "genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna",
+                "test_gff": "genome_data/fungi_diverse/r_delemar/test/r_delemar_test.gff",
+                "test_chromosomes": [
+                    "NW_027137852.1",
+                    "NW_027137844.1",
+                    "NW_027137856.1",
+                    "NW_027137895.1",
+                    "NW_027137859.1",
+                    "NW_027137904.1",
+                    "NW_027137881.1",
+                    "NW_027137853.1",
+                    "NW_027137891.1",
+                    "NW_027137894.1",
+                    "NW_027137838.1",
+                    "NW_027137870.1",
+                    "NW_027137839.1",
+                    "NW_027137862.1",
+                    "NW_027137841.1"
+                ],
+                "excluded_chromosomes": [
+                    "NW_027137909.1",
+                    "NW_027137908.1"
+                ]
+            },
+            {
+                "name": "b_dendrobatidis",
+                "source_fasta": "genome_data/fungi_diverse/b_dendrobatidis/full/b_dendrobatidis_full.fna",
+                "source_gff": "genome_data/fungi_diverse/b_dendrobatidis/full/b_dendrobatidis_full.gff",
+                "train_fasta": "genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna",
+                "train_gff": "genome_data/fission_yeasts/s_pombe/train/s_pombe_train.gff",
+                "test_fasta": "genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna",
+                "test_gff": "genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.gff",
+                "test_chromosomes": [
+                    "NW_006281148.1",
+                    "NW_006281169.1",
+                    "NW_006281140.1",
+                    "NW_006281155.1",
+                    "NW_006281156.1",
+                    "NW_006281177.1",
+                    "NW_006281136.1",
+                    "NW_006281108.1",
+                    "NW_006281210.1",
+                    "NW_006281167.1",
+                    "NW_006281203.1",
+                    "NW_006281223.1",
+                    "NW_006281114.1",
+                    "NW_006281173.1",
+                    "NW_006281110.1"
+                ],
+                "excluded_chromosomes": []
+            }
+        ]
+    },
+    "splice_cnn": {
+        "model": "src/model/cnn/splice/trained_models/fungi_diverse_splice_cnn.pt",
+        "donor_scale": 1.0,
+        "donor_bias": 0.0,
+        "acceptor_scale": 1.0,
+        "acceptor_bias": 0.0,
+        "train_scores": [
+            "genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/n_crassa/train/n_crassa_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/r_delemar/train/r_delemar_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_splice_cnn_scores.tsv"
+        ],
+        "test_scores": [
+            "genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/n_crassa/test/n_crassa_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/r_delemar/test/r_delemar_splice_cnn_scores.tsv",
+            "genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_splice_cnn_scores.tsv"
+        ],
+        "train_scores_minus": [],
+        "test_scores_minus": []
+    },
+    "start_cnn": {
+        "model": "src/model/cnn/start/trained_models/fission_yeasts_start_cnn.pt",
+        "start_scale": 1.0,
+        "start_bias": -6.0,
+        "train_scores": [
+            "genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/n_crassa/train/n_crassa_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/r_delemar/train/r_delemar_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_start_cnn_scores.tsv"
+        ],
+        "test_scores": [
+            "genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/n_crassa/test/n_crassa_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/r_delemar/test/r_delemar_start_cnn_scores.tsv",
+            "genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_start_cnn_scores.tsv"
+        ],
+        "train_scores_minus": [],
+        "test_scores_minus": []
+    },
+    "filters": {
+        "min_first_cds_bp": 3,
+        "min_last_cds_bp": 3,
+        "min_intron_bp": 20,
+        "require_3n_cds": true,
+        "include_minus_strand": false
+    },
+    "emissions": {
+        "INTERGENIC": {
+            "type": "markov",
+            "order": 1
+        },
+        "INTRON": {
+            "type": "markov",
+            "order": 5
+        },
+        "EXON_FRAME": {
+            "type": "markov",
+            "order": 5,
+            "frame_tied": true
+        },
+        "DONOR": {
+            "type": "pssm",
+            "window_left": 3,
+            "window_right": 6
+        },
+        "ACCEPTOR": {
+            "type": "pssm",
+            "window_left": 15,
+            "window_right": 3
+        },
+        "START_CODON": {
+            "type": "deterministic"
+        },
+        "STOP_CODON": {
+            "type": "deterministic"
+        }
+    },
+    "smoothing": {
+        "transition_alpha": 0.02,
+        "emission_alpha": 0.1
+    }
+}

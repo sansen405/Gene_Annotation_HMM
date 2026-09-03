@@ -1,0 +1,37 @@
+
+=== Test: b_dendrobatidis:NW_006281108.1,b_dendrobatidis:NW_006281167.1,b_dendrobatidis:NW_006281169.1,b_dendrobatidis:NW_006281110.1,b_dendrobatidis:NW_006281173.1,b_dendrobatidis:NW_006281177.1,b_dendrobatidis:NW_006281114.1,b_dendrobatidis:NW_006281203.1,b_dendrobatidis:NW_006281210.1,b_dendrobatidis:NW_006281223.1,b_dendrobatidis:NW_006281136.1,b_dendrobatidis:NW_006281140.1,b_dendrobatidis:NW_006281148.1,b_dendrobatidis:NW_006281155.1,b_dendrobatidis:NW_006281156.1 ===
+Metric                               Value
+Evaluated bases                    1604026
+Exact 21-state accuracy             0.8377
+Illegal transitions                      0
+Predicted gene intervals               516
+Gold gene intervals                    426
+Intron length cap p95                  202
+Gene start penalty                  1.0000
+Intron duration model            histogram
+Duration table size                    203
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                     -6.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.7578      0.9334      0.8365      0.8817    485401    155141     34613    928871
+intron            0.8175      0.5297      0.6429      0.9413     84719     18907     75213   1425187
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.4690      0.5681         242         516         426
+stop              0.6182      0.7488         319         516         426
+donor             0.7448      0.6485         867        1164        1337
+acceptor          0.7543      0.6567         878        1164        1337
+
+Structure Metrics (exact interval match):
+Boundary       Precision      Recall       Exact   Predicted        Gold
+exon              0.5554      0.5292         933        1680        1763
+gene              0.3353      0.4061         173         516         426
+gene_sens         0.4061    (recall)
+gene_spec         0.3353 (precision)

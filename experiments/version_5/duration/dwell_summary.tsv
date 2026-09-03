@@ -1,0 +1,9 @@
+metric	value
+n_lengths	15
+max_length	200
+empirical_mean	84.0
+empirical_p50	55.0
+empirical_p95	200.0
+geometric_mean_from_A	50.50166665555553
+histogram_mean	98.64485981308411
+negative_binomial_mean	67.84377426533527

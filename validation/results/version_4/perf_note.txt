@@ -1,0 +1,19 @@
+c++ -std=c++17 -O2 -Wall -Isrc -I/opt/homebrew/include \
+		validation/bench_viterbi.cpp src/decoding/Viterbi.cpp src/model/transition/Transition_Model.cpp src/genome_profiles/Genome_Profile.cpp src/parsers/FNA_Parser.cpp src/parsers/GFF_Parser.cpp src/model/emission/Emission_Model.cpp src/model/cnn/splice/Splice_CNN_Scores.cpp src/model/cnn/start/Start_CNN_Scores.cpp \
+		-o build/bench_viterbi
+src/parsers/GFF_Parser.cpp:309:13: warning: variable 'num_illegal_transitions' set but not used [-Wunused-but-set-variable]
+  309 |         int num_illegal_transitions = 0;
+      |             ^
+1 warning generated.
+build/bench_viterbi --profile src/genome_profiles/fission_yeasts/fission_yeasts.json
+=== Viterbi performance note ===
+Species:              s_pombe
+Chromosome:           NC_003424.3
+Length T:             5579133 bases
+Emitting states S:    19
+Sparse legal edges E: 28 (dense would be 361)
+Asymptotics:          O(T · E) time with sparse Transitions; O(T · S) backpointer memory (scores/lengths are 2-row streaming)
+Streaming DP tables:  ~111.7342 MiB backpointers (legacy full V+B+len ≈ 1.8550 GiB)
+Wall-clock decode:    1.0068 s
+Throughput:           5.5413 Mbp/s
+Path length:          5579133

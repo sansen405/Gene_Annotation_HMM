@@ -1,0 +1,37 @@
+
+=== Test: n_crassa:NC_026507.1 ===
+Metric                               Value
+Evaluated bases                    3366342
+Exact 21-state accuracy             0.8663
+Illegal transitions                      0
+Predicted gene intervals               955
+Gold gene intervals                    513
+Intron length cap p95                  202
+Gene start penalty                  1.0000
+Intron duration model            histogram
+Duration table size                    203
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                     -6.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.6632      0.9826      0.7920      0.8850    736986    374202     13017   2242137
+intron            0.5480      0.5014      0.5236      0.9783     40217     33175     39998   3252952
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.3194      0.5945         305         955         513
+stop              0.3738      0.6959         357         955         513
+donor             0.4325      0.5790         436        1008         753
+acceptor          0.4375      0.5857         441        1008         753
+
+Structure Metrics (exact interval match):
+Boundary       Precision      Recall       Exact   Predicted        Gold
+exon              0.2883      0.4471         566        1963        1266
+gene              0.2335      0.4347         223         955         513
+gene_sens         0.4347    (recall)
+gene_spec         0.2335 (precision)

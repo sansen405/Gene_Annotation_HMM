@@ -1,0 +1,41 @@
+[16:42:58] device: mps backbone=bilstm epochs=4 neg=3
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna records=2 bases=6,992,687 elapsed=0.0s
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna records=31 bases=7,441,462 elapsed=0.0s
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna records=4 bases=7,011,748 elapsed=0.0s
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna records=29 bases=8,678,028 elapsed=0.0s
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_pombe/test/s_pombe_test.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_pombe/test/s_pombe_test.fna records=1 bases=5,579,133 elapsed=0.0s
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.fna records=1 bases=4,291,692 elapsed=0.0s
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.fna records=1 bases=4,622,725 elapsed=0.0s
+[16:42:58] loading FASTA: genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.fna
+[16:42:58] loaded FASTA: genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.fna records=1 bases=2,876,736 elapsed=0.0s
+[16:42:58] training from scratch on train GFF labels
+[16:42:58] loading splice sites from GFF: genome_data/fission_yeasts/s_pombe/train/s_pombe_train.gff
+[16:42:58] loaded splice sites: donors=2,784 acceptors=2,784 elapsed=0.0s
+[16:42:58] sampling examples from genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna
+[16:42:59] scanned negative candidates: 64% candidates=416,701
+[16:42:59] scanned negative candidates: 100% candidates=644,061
+[16:42:59] selected examples: positives=5,568 negatives=16,704
+[16:42:59] encoding windows: count=22,272 width=121
+[16:43:03] finished examples from genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna elapsed=4.7s
+[16:43:03] loading splice sites from GFF: genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.gff
+[16:43:03] loaded splice sites: donors=3,157 acceptors=3,157 elapsed=0.0s
+[16:43:03] sampling examples from genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna
+[16:43:03] scanned negative candidates: 51% candidates=384,721
+[16:43:04] scanned negative candidates: 92% candidates=690,026
+[16:43:04] scanned negative candidates: 95% candidates=702,378
+[16:43:04] scanned negative candidates: 96% candidates=708,418
+[16:43:04] scanned negative candidates: 97% candidates=711,969
+[16:43:04] scanned negative candidates: 97% candidates=714,593
+[16:43:04] scanned negative candidates: 97% candidates=716,781
+[16:43:04] scanned negative candidates: 98% candidates=718,817
+[16:43:04] scanned negative candidates: 98% candidates=720,337
+[16:43:04] scanned negative candidates: 100% candidates=732,256
+[16:43:04] selected examples: positives=6,314 negatives=18,942
+[16:43:04] encoding windows: count=25,256 width=121

@@ -1,0 +1,39 @@
+Loading validation profile: fission_yeasts
+Species datasets: 4
+  s_pombe
+    train FASTA: genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna
+    train GFF:   genome_data/fission_yeasts/s_pombe/train/s_pombe_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_pombe/test/s_pombe_test.fna
+    test GFF:    genome_data/fission_yeasts/s_pombe/test/s_pombe_test.gff
+  s_japonicus
+    train FASTA: genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna
+    train GFF:   genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.fna
+    test GFF:    genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.gff
+  s_octosporus
+    train FASTA: genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna
+    train GFF:   genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.fna
+    test GFF:    genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.gff
+  s_cryophilus
+    train FASTA: genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna
+    train GFF:   genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.fna
+    test GFF:    genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.gff
+Training chromosomes: 66
+Evaluation chromosomes: 4
+Usable training intervals: 6448
+Usable evaluation intervals: 3783
+
+Tuning gene-start penalty objective=0.5*(exact exon F1 + exact gene F1)
+Tuning subset: 64/3783 usable evaluation intervals
+NOTE: Prefer train-fit operating points; eval-label sweeps are diagnostic only.
+  penalty=0.00 objective=0.7722 intron_f1=0.8064 exon_exact_f1=0.7944
+  penalty=0.50 objective=0.7722 intron_f1=0.8064 exon_exact_f1=0.7944
+  penalty=1.00 objective=0.7768 intron_f1=0.8064 exon_exact_f1=0.7972
+  penalty=1.50 objective=0.7768 intron_f1=0.8064 exon_exact_f1=0.7972
+  penalty=2.00 objective=0.7768 intron_f1=0.8064 exon_exact_f1=0.7972
+  penalty=3.00 objective=0.7680 intron_f1=0.8026 exon_exact_f1=0.7902
+  penalty=4.00 objective=0.7680 intron_f1=0.8026 exon_exact_f1=0.7902
+  penalty=5.00 objective=0.7680 intron_f1=0.8026 exon_exact_f1=0.7902
+Selected gene-start penalty=1.0000 objective=0.7768 (was 1.0000)

@@ -563,7 +563,7 @@
         ]
     },
     "start_cnn": {
-        "model": "src/model/cnn/start/trained_models/fungi_diverse_start_cnn.pt",
+        "model": "src/model/cnn/start/trained_models/fission_yeasts_start_cnn.pt",
         "start_scale": 1.0,
         "start_bias": 0.0,
         "train_scores": [
@@ -685,7 +685,7 @@
         },
         "INTRON": {
             "type": "markov",
-            "order": 1
+            "order": 5
         },
         "EXON_FRAME": {
             "type": "markov",

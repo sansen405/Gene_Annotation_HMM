@@ -1,0 +1,4 @@
+setting	coding_f1	intron_f1	exon_p	exon_r	gene_p	gene_r	exact21	bases
+fission_holdout_V5	0.9757	0.8413	0.8400	0.8187	0.8080	0.8157	0.9723	23565610
+zeroshot_fission_to_fungi	0.8716	0.6298	0.5108	0.5095	0.3898	0.4708	0.8895	12102460
+indomain_fungi_span	0.8785	0.6397	0.5663	0.5460	0.4557	0.4532	0.8967	12102460

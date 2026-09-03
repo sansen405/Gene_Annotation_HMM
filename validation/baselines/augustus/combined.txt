@@ -1,0 +1,47 @@
+=== Augustus baseline (schizosaccharomyces_pombe model) ===
+
+--- s_pombe (len=5,579,133, wall=0.0s) ---
+coding  P=0.9968 R=0.9156 F1=0.9545
+intron  P=0.5809 R=0.8806 F1=0.7000
+start   P=0.8522 R=0.7292 exact=1707 pred=2003 gold=2341
+stop    P=0.9661 R=0.8262 exact=1935 pred=2003 gold=2342
+genes   predicted=2003 gold=2342
+
+--- s_japonicus (len=4,291,692, wall=0.0s) ---
+coding  P=0.9492 R=0.9770 F1=0.9629
+intron  P=0.6060 R=0.8568 F1=0.7099
+start   P=0.8005 R=0.7953 exact=1465 pred=1830 gold=1842
+stop    P=0.8945 R=0.8887 exact=1637 pred=1830 gold=1842
+genes   predicted=1830 gold=1842
+
+--- s_octosporus (len=4,622,725, wall=0.0s) ---
+coding  P=0.9943 R=0.9477 F1=0.9704
+intron  P=0.5927 R=0.8726 F1=0.7059
+start   P=0.8377 R=0.7570 exact=1517 pred=1811 gold=2004
+stop    P=0.9669 R=0.8738 exact=1751 pred=1811 gold=2004
+genes   predicted=1811 gold=2004
+
+--- s_cryophilus (len=2,876,736, wall=0.0s) ---
+coding  P=0.9871 R=0.9335 F1=0.9596
+intron  P=0.5141 R=0.8288 F1=0.6346
+start   P=0.8093 R=0.6981 exact=904 pred=1117 gold=1295
+stop    P=0.9454 R=0.8148 exact=1056 pred=1117 gold=1296
+genes   predicted=1117 gold=1297
+
+=== Combined (all holdout chromosomes) ===
+Evaluated bases                   17370286
+coding  P=0.9817 R=0.9425 F1=0.9617
+intron  P=0.5776 R=0.8634 F1=0.6922
+start   P=0.8272 R=0.7475 exact=5593 pred=6761 gold=7482
+stop    P=0.9435 R=0.8524 exact=6379 pred=6761 gold=7484
+
+=== Side-by-side (nucleotide metrics on same holdout FASTAs) ===
+Metric                     Augustus  This HMM (V4.2)
+Coding F1                    0.9617           0.9757
+Intron F1                    0.6922           0.8413
+Start boundary P             0.8272           0.8474
+Start boundary R             0.7475           0.8554
+Stop boundary P              0.9435           0.9164
+Stop boundary R              0.8524           0.9252
+
+Notes: Augustus uses the schizosaccharomyces_pombe parameter set for all four species (trained parameters unavailable for japonicus/octosporus/cryophilus). Coding/intron labels are painted from CDS features on both strands into one mask per chromosome (intron = gaps between consecutive CDS of the same transcript). Augustus CDS is extended by 3 bp at the terminal exon to include the stop codon (stopCodonExcludedFromCDS). HMM metrics from validation/results/version_4/combined.txt evaluate each strand separately and sum (~2× bases); nucleotide F1 is still the fairest available head-to-head on these FASTAs. HMM also reports donor/acceptor.

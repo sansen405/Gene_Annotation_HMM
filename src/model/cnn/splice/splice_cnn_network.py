@@ -1,15 +1,29 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import torch
 from torch import nn
 
+# Allow importing sibling emissions_nn package from trainers that chdir/import locally.
+_REPO_MODEL = Path(__file__).resolve().parents[1]
+if str(_REPO_MODEL) not in sys.path:
+    sys.path.insert(0, str(_REPO_MODEL))
+
+from emissions_nn.backbones import one_hot_encode_windows  # noqa: E402
+from emissions_nn.models import SpliceEmissionModel  # noqa: E402
+
 
 class SpliceCNN(nn.Module):
+    """Legacy DilatedCNN splice model (checkpoint-compatible module names)."""
+
     POOL_BINS = 8
 
     def __init__(self, window_size: int = 121, hidden_channels: int = 128) -> None:
         super().__init__()
         self.window_size = window_size
+        self.backbone_name = "dilated_cnn"
         center = window_size // 2
         self.donor_slice = (max(0, center - 10), min(window_size, center + 21))
         self.acceptor_slice = (max(0, center - 50), min(window_size, center + 11))
@@ -51,14 +65,15 @@ class SpliceCNN(nn.Module):
         return torch.cat([donor_logit, acceptor_logit], dim=1)
 
 
-def one_hot_encode_windows(windows: list[str]) -> torch.Tensor:
-    encoded = torch.zeros((len(windows), 4, len(windows[0])), dtype=torch.float32)
-    channel_by_base = {"A": 0, "C": 1, "G": 2, "T": 3}
+def build_splice_model(
+    window_size: int = 121,
+    backbone: str = "dilated_cnn",
+    hidden: int = 128,
+) -> nn.Module:
+    name = backbone.lower().replace("-", "_")
+    if name in ("dilated_cnn", "cnn", "dilated"):
+        return SpliceCNN(window_size=window_size, hidden_channels=hidden)
+    return SpliceEmissionModel(window_size=window_size, backbone=name, hidden=hidden)
 
-    for row, window in enumerate(windows):
-        for col, base in enumerate(window.upper()):
-            channel = channel_by_base.get(base)
-            if channel is not None:
-                encoded[row, channel, col] = 1.0
 
-    return encoded
+__all__ = ["SpliceCNN", "build_splice_model", "one_hot_encode_windows", "SpliceEmissionModel"]

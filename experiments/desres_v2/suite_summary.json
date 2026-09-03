@@ -1,0 +1,7 @@
+{
+  "phase0_n_backbones": 3,
+  "phase1_ece": 0.9184358706751664,
+  "phase2_tokens": 115091.0,
+  "phase3_crf_nll": 29.650089263916016,
+  "phase4_coral_reduction": 6.88172054452707e-07
+}

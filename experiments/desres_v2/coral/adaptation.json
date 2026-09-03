@@ -1,0 +1,70 @@
+{
+  "coral_initial": 7.175007681325951e-07,
+  "coral_final": 2.9328713679888097e-08,
+  "coral_reduction": 6.88172054452707e-07,
+  "history": [
+    {
+      "step": 0,
+      "task": 0.6229297518730164,
+      "coral": 7.381410682683054e-07
+    },
+    {
+      "step": 15,
+      "task": 0.2239018678665161,
+      "coral": 3.197038367375171e-08
+    },
+    {
+      "step": 30,
+      "task": 0.21834512054920197,
+      "coral": 1.484229716908203e-08
+    },
+    {
+      "step": 45,
+      "task": 0.21779535710811615,
+      "coral": 1.3074666682655334e-08
+    }
+  ],
+  "transfer_baseline": [
+    {
+      "setting": "fission_holdout_V5",
+      "coding_f1": "0.9757",
+      "intron_f1": "0.8413",
+      "exon_p": "0.8400",
+      "exon_r": "0.8187",
+      "gene_p": "0.8080",
+      "gene_r": "0.8157",
+      "exact21": "0.9723",
+      "bases": "23565610"
+    },
+    {
+      "setting": "zeroshot_fission_to_fungi",
+      "coding_f1": "0.8716",
+      "intron_f1": "0.6298",
+      "exon_p": "0.5108",
+      "exon_r": "0.5095",
+      "gene_p": "0.3898",
+      "gene_r": "0.4708",
+      "exact21": "0.8895",
+      "bases": "12102460"
+    },
+    {
+      "setting": "indomain_fungi_span",
+      "coding_f1": "0.8785",
+      "intron_f1": "0.6397",
+      "exon_p": "0.5663",
+      "exon_r": "0.5460",
+      "gene_p": "0.4557",
+      "gene_r": "0.4532",
+      "exact21": "0.8967",
+      "bases": "12102460"
+    }
+  ],
+  "adapted_estimate": {
+    "setting": "coral_adapted_estimate",
+    "gene_p": 0.4530062576134449,
+    "intron_f1": 0.6392953254988332,
+    "coding_f1": 0.8782179541355504,
+    "note": "Interpolated by CORAL reduction fraction; replace with full re-score when scores ready."
+  },
+  "protocol": "1) Train encoder on fission labels + CORAL(fungi unlabeled windows). 2) Export sparse scores for fungi holdouts. 3) Run full_genome_validation; compare zeroshot vs adapted vs indomain."
+}

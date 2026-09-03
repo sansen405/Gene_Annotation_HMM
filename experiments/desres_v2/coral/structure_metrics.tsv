@@ -1,0 +1,5 @@
+setting	gene_p	intron_f1	coding_f1	notes
+fission_holdout_V5	0.8080	0.8413	0.9757	measured_v5
+zeroshot_fission_to_fungi	0.3898	0.6298	0.8716	measured_v5
+indomain_fungi_span	0.4557	0.6397	0.8785	measured_v5
+coral_adapted_estimate	0.4530	0.6393	0.8782	Interpolated by CORAL reduction fraction; replace with full re-score when scores ready.

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <vector>
 #include <limits>
@@ -64,4 +65,36 @@ namespace gene_hmm {
         {State::STOP_CODON_3, {State::INTERGENIC, State::END}},
         {State::END, {}}
     };
+
+    // Emitting-state adjacency for sparse DP (excludes START/END).
+    // Average degree ~1.5 vs dense S≈19 emitting states.
+    inline const array<vector<State>, NUM_STATES>& emitting_predecessors() {
+        static const array<vector<State>, NUM_STATES> preds = [] {
+            array<vector<State>, NUM_STATES> built{};
+            for (const auto& [from, tos] : Transitions) {
+                if (from == State::START || from == State::END) continue;
+                for (State to : tos) {
+                    if (to == State::START || to == State::END) continue;
+                    built[idx(to)].push_back(from);
+                }
+            }
+            return built;
+        }();
+        return preds;
+    }
+
+    inline const array<vector<State>, NUM_STATES>& emitting_successors() {
+        static const array<vector<State>, NUM_STATES> succs = [] {
+            array<vector<State>, NUM_STATES> built{};
+            for (const auto& [from, tos] : Transitions) {
+                if (from == State::START || from == State::END) continue;
+                for (State to : tos) {
+                    if (to == State::START || to == State::END) continue;
+                    built[idx(from)].push_back(to);
+                }
+            }
+            return built;
+        }();
+        return succs;
+    }
 }

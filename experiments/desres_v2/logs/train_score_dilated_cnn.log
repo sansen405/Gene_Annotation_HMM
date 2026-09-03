@@ -1,0 +1,23 @@
+[16:09:05] device: mps
+[16:09:05] starting splice CNN score pipeline
+[16:09:05] model checkpoint: /Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/splice_dilated_cnn.pt
+[16:09:05] backbone: dilated_cnn
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna records=2 bases=6,992,687 elapsed=0.0s
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna records=31 bases=7,441,462 elapsed=0.0s
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna records=4 bases=7,011,748 elapsed=0.0s
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna records=29 bases=8,678,028 elapsed=0.0s
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_pombe/test/s_pombe_test.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_pombe/test/s_pombe_test.fna records=1 bases=5,579,133 elapsed=0.0s
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.fna records=1 bases=4,291,692 elapsed=0.0s
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.fna records=1 bases=4,622,725 elapsed=0.0s
+[16:09:05] loading FASTA: genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.fna
+[16:09:05] loaded FASTA: genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.fna records=1 bases=2,876,736 elapsed=0.0s
+[16:09:05] loading existing CNN checkpoint: /Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/splice_dilated_cnn.pt
+[16:09:05] loaded calibration: temperature=1.3710 donor_prior_logit=-2.3968 acceptor_prior_logit=-2.4020
+[16:09:06] writing sparse scores: input=genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna output=/Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/scores/s_pombe_train_splice.tsv bases=6,992,687 candidates=646,892 strand=+

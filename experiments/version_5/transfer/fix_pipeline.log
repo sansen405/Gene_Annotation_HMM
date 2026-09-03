@@ -1,0 +1,152 @@
+validation/full_genome_validation.cpp:425:18: warning: unused function 'collect_error_intervals' [-Wunused-function]
+  425 | vector<Interval> collect_error_intervals(
+      |                  ^~~~~~~~~~~~~~~~~~~~~~~
+validation/full_genome_validation.cpp:456:6: warning: unused function 'print_intervals' [-Wunused-function]
+  456 | void print_intervals(const string& label, const vector<Interval>& intervals, size_t max_count) {
+      |      ^~~~~~~~~~~~~~~
+validation/full_genome_validation.cpp:468:16: warning: unused function 'split_csv' [-Wunused-function]
+  468 | vector<string> split_csv(const string& text) {
+      |                ^~~~~~~~~
+validation/full_genome_validation.cpp:640:6: warning: unused function 'print_state_family_counts' [-Wunused-function]
+  640 | void print_state_family_counts(const string& label, const vector<State>& states) {
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~
+validation/full_genome_validation.cpp:652:6: warning: unused function 'print_log_prob' [-Wunused-function]
+  652 | void print_log_prob(const string& label, Log_Prob value) {
+      |      ^~~~~~~~~~~~~~
+validation/full_genome_validation.cpp:666:6: warning: unused function 'print_average_emission' [-Wunused-function]
+  666 | void print_average_emission(
+      |      ^~~~~~~~~~~~~~~~~~~~~~
+6 warnings generated.
+src/parsers/GFF_Parser.cpp:309:13: warning: variable 'num_illegal_transitions' set but not used [-Wunused-but-set-variable]
+  309 |         int num_illegal_transitions = 0;
+      |             ^
+1 warning generated.
+src/parsers/GFF_Parser.cpp:309:13: warning: variable 'num_illegal_transitions' set but not used [-Wunused-but-set-variable]
+  309 |         int num_illegal_transitions = 0;
+      |             ^
+1 warning generated.
+=== [1/5] Train fungi start CNN (or reload if checkpoint exists) ===
+[23:30:48] device: cpu
+[23:30:48] starting start CNN score pipeline
+[23:30:48] model checkpoint: src/model/cnn/start/trained_models/fungi_diverse_span_start_cnn.pt
+[23:30:48] loading FASTA: genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna
+[23:30:48] loaded FASTA: genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna records=14 bases=9,448,102 elapsed=0.0s
+[23:30:48] loading FASTA: genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna
+[23:30:48] loaded FASTA: genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna records=19 bases=36,782,235 elapsed=0.1s
+[23:30:48] loading FASTA: genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna
+[23:30:48] loaded FASTA: genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna records=12 bases=16,746,424 elapsed=0.0s
+[23:30:48] loading FASTA: genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna
+[23:30:49] loaded FASTA: genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna records=66 bases=40,820,752 elapsed=0.1s
+[23:30:49] loading FASTA: genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna
+[23:30:49] loaded FASTA: genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna records=47 bases=21,391,202 elapsed=0.0s
+[23:30:49] loading FASTA: genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_test.fna
+[23:30:49] loaded FASTA: genome_data/fungi_diverse/s_cerevisiae/test/s_cerevisiae_test.fna records=2 bases=2,623,224 elapsed=0.0s
+[23:30:49] loading FASTA: genome_data/fungi_diverse/n_crassa/test/n_crassa_test.fna
+[23:30:49] loaded FASTA: genome_data/fungi_diverse/n_crassa/test/n_crassa_test.fna records=1 bases=4,255,303 elapsed=0.0s
+[23:30:49] loading FASTA: genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_test.fna
+[23:30:49] loaded FASTA: genome_data/fungi_diverse/cr_neoformans/test/cr_neoformans_test.fna records=2 bases=2,144,769 elapsed=0.0s
+[23:30:49] loading FASTA: genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna
+[23:30:49] loaded FASTA: genome_data/fungi_diverse/r_delemar/test/r_delemar_test.fna records=15 bases=5,266,365 elapsed=0.0s
+[23:30:49] loading FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna
+[23:30:49] loaded FASTA: genome_data/fungi_diverse/b_dendrobatidis/test/b_dendrobatidis_test.fna records=15 bases=2,419,694 elapsed=0.0s
+[23:30:49] loading start sites from GFF: genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.gff
+[23:30:49] loaded start sites: starts=4,664 elapsed=0.0s
+[23:30:49] sampling examples from genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna
+[23:30:49] scanned negative candidates: 11% candidates=18,518
+[23:30:49] scanned negative candidates: 20% candidates=34,623
+[23:30:49] scanned negative candidates: 34% candidates=59,479
+[23:30:49] scanned negative candidates: 40% candidates=69,497
+[23:30:49] scanned negative candidates: 53% candidates=91,009
+[23:30:49] scanned negative candidates: 60% candidates=103,140
+[23:30:49] scanned negative candidates: 71% candidates=122,207
+[23:30:49] scanned negative candidates: 81% candidates=138,996
+[23:30:49] scanned negative candidates: 100% candidates=170,461
+[23:30:49] selected examples: positives=4,664 negatives=23,320
+[23:30:49] encoding windows: count=27,984 width=121
+[23:30:55] finished examples from genome_data/fungi_diverse/s_cerevisiae/train/s_cerevisiae_train.fna elapsed=6.3s
+[23:30:55] loading start sites from GFF: genome_data/fungi_diverse/n_crassa/train/n_crassa_train.gff
+[23:30:55] loaded start sites: starts=8,896 elapsed=0.1s
+[23:30:55] sampling examples from genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna
+[23:30:55] scanned negative candidates: 26% candidates=145,059
+[23:30:56] scanned negative candidates: 38% candidates=209,556
+[23:30:56] scanned negative candidates: 53% candidates=286,800
+[23:30:56] scanned negative candidates: 69% candidates=374,502
+[23:30:56] scanned negative candidates: 86% candidates=470,843
+[23:30:57] scanned negative candidates: 98% candidates=532,423
+[23:30:57] scanned negative candidates: 98% candidates=533,025
+[23:30:57] scanned negative candidates: 99% candidates=533,291
+[23:30:57] scanned negative candidates: 99% candidates=533,520
+[23:30:57] scanned negative candidates: 100% candidates=533,723
+[23:30:57] selected examples: positives=8,896 negatives=44,480
+[23:30:57] encoding windows: count=53,376 width=121
+[23:31:08] finished examples from genome_data/fungi_diverse/n_crassa/train/n_crassa_train.fna elapsed=12.7s
+[23:31:08] loading start sites from GFF: genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.gff
+[23:31:08] loaded start sites: starts=6,288 elapsed=0.1s
+[23:31:08] sampling examples from genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna
+[23:31:08] scanned negative candidates: 13% candidates=42,019
+[23:31:08] scanned negative candidates: 23% candidates=71,710
+[23:31:08] scanned negative candidates: 32% candidates=100,557
+[23:31:08] scanned negative candidates: 43% candidates=133,744
+[23:31:08] scanned negative candidates: 52% candidates=159,861
+[23:31:08] scanned negative candidates: 60% candidates=185,832
+[23:31:08] scanned negative candidates: 75% candidates=233,259
+[23:31:08] scanned negative candidates: 85% candidates=261,921
+[23:31:09] scanned negative candidates: 94% candidates=290,346
+[23:31:09] scanned negative candidates: 100% candidates=307,810
+[23:31:09] selected examples: positives=6,288 negatives=31,440
+[23:31:09] encoding windows: count=37,728 width=121
+[23:31:16] finished examples from genome_data/fungi_diverse/cr_neoformans/train/cr_neoformans_train.fna elapsed=8.0s
+[23:31:16] loading start sites from GFF: genome_data/fungi_diverse/r_delemar/train/r_delemar_train.gff
+[23:31:16] loaded start sites: starts=15,519 elapsed=0.1s
+[23:31:16] sampling examples from genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna
+[23:31:16] scanned negative candidates: 12% candidates=99,901
+[23:31:16] scanned negative candidates: 21% candidates=167,437
+[23:31:17] scanned negative candidates: 33% candidates=255,582
+[23:31:17] scanned negative candidates: 47% candidates=363,676
+[23:31:17] scanned negative candidates: 55% candidates=423,165
+[23:31:17] scanned negative candidates: 63% candidates=485,425
+[23:31:17] scanned negative candidates: 71% candidates=550,298
+[23:31:18] scanned negative candidates: 84% candidates=646,158
+[23:31:18] scanned negative candidates: 98% candidates=755,232
+[23:31:18] scanned negative candidates: 100% candidates=768,908
+[23:31:18] selected examples: positives=15,519 negatives=77,595
+[23:31:19] encoding windows: count=93,114 width=121
+[23:31:37] finished examples from genome_data/fungi_diverse/r_delemar/train/r_delemar_train.fna elapsed=20.9s
+[23:31:37] loading start sites from GFF: genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.gff
+[23:31:37] loaded start sites: starts=7,467 elapsed=0.1s
+[23:31:37] sampling examples from genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna
+[23:31:37] scanned negative candidates: 20% candidates=98,117
+[23:31:37] scanned negative candidates: 20% candidates=98,295
+[23:31:37] scanned negative candidates: 32% candidates=153,399
+[23:31:37] scanned negative candidates: 40% candidates=194,432
+[23:31:37] scanned negative candidates: 50% candidates=242,243
+[23:31:38] scanned negative candidates: 60% candidates=289,382
+[23:31:38] scanned negative candidates: 75% candidates=363,109
+[23:31:38] scanned negative candidates: 82% candidates=396,635
+[23:31:38] scanned negative candidates: 94% candidates=454,305
+[23:31:38] scanned negative candidates: 100% candidates=479,380
+[23:31:38] selected examples: positives=7,467 negatives=37,335
+[23:31:38] encoding windows: count=44,802 width=121
+[23:31:47] finished examples from genome_data/fungi_diverse/b_dendrobatidis/train/b_dendrobatidis_train.fna elapsed=9.9s
+[23:31:47] training totals: starts=42,815
+[23:31:47] combining training tensors
+[23:31:49] starting start CNN training: train=231,304 val=25,700 epochs=10 batch_size=256 batches_per_epoch=904 device=cpu
+[23:32:25] epoch 1/10: batch 90/904
+[23:33:03] epoch 1/10: batch 180/904
+[23:33:40] epoch 1/10: batch 270/904
+[23:34:18] epoch 1/10: batch 360/904
+[23:34:55] epoch 1/10: batch 450/904
+[23:35:33] epoch 1/10: batch 540/904
+[23:36:10] epoch 1/10: batch 630/904
+[23:36:48] epoch 1/10: batch 720/904
+[23:37:25] epoch 1/10: batch 810/904
+[23:38:03] epoch 1/10: batch 900/904
+[23:38:04] epoch 1/10: batch 904/904
+[23:38:28] finished epoch 1/10: train_loss=0.3070 val_loss=0.2650 val_start_ap=0.7292 lr=9.76e-04 elapsed=399.4s
+[23:39:06] epoch 2/10: batch 90/904
+[23:39:42] epoch 2/10: batch 180/904
+[23:40:18] epoch 2/10: batch 270/904
+[23:40:57] epoch 2/10: batch 360/904
+[23:41:33] epoch 2/10: batch 450/904
+experiments/version_5/transfer/run_fungi_fix_pipeline.sh: line 69: 11476 Terminated: 15          "$PY" src/model/cnn/start/train_start_cnn_scores.py --train-fasta "${train_fastas[@]}" --train-gff "${train_gffs[@]}" --test-fasta "${test_fastas[@]}" --model-out "$START_MODEL" --train-scores-out "${train_start[@]}" --test-scores-out "${test_start[@]}" --train-scores-minus-out "${train_start_m[@]}" --test-scores-minus-out "${test_start_m[@]}" --sparse-scores --score-batch-size 8192 --require-3n-cds --epochs "${EPOCHS:-10}" 2>&1
+     11477 Done                    | tee "$LOG_DIR/fix_start_cnn.log"

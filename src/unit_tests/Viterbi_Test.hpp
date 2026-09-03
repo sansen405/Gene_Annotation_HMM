@@ -173,6 +173,99 @@ namespace gene_hmm {
               penalized_path == vector<State>(nucs.size(), State::INTERGENIC));
     }
 
+    static void test_viterbi_path_log_prob_matches_duration_decode_score() {
+        cout << "\n[TEST 7] path_log_prob HSMM terms match explicit duration accounting\n";
+
+        Emission_Model model = make_viterbi_test_model(3);
+        auto transitions = make_viterbi_log_zero_matrix();
+        transitions[idx(State::START)][idx(State::INTERGENIC)] = 0.0;
+        transitions[idx(State::INTERGENIC)][idx(State::INTERGENIC)] = log(0.7);
+        transitions[idx(State::INTERGENIC)][idx(State::END)] = log(0.3);
+        vector<Nucleotide> nucs = {Nucleotide::C, Nucleotide::G, Nucleotide::T};
+        vector<State> path = {State::INTERGENIC, State::INTERGENIC, State::INTERGENIC};
+
+        Log_Prob plain = Viterbi::path_log_prob(
+            path, nucs, transitions, model, 0.0, 0, path.size(), {});
+        Log_Prob with_empty_table = Viterbi::path_log_prob(
+            path, nucs, transitions, model, 0.0, 0, path.size());
+        CHECK("overload without duration matches empty duration table",
+              fabs(plain - with_empty_table) < 1e-12);
+
+        // Duration path: donor + 3 intron body bases + acceptor.
+        nucs = {
+            Nucleotide::G, Nucleotide::T, Nucleotide::A, Nucleotide::A, Nucleotide::G
+        };
+        model = make_viterbi_test_model(nucs.size());
+        transitions = make_viterbi_log_zero_matrix();
+        transitions[idx(State::START)][idx(State::DONOR_1)] = 0.0;
+        transitions[idx(State::DONOR_1)][idx(State::INTRON_1)] = log(0.5);
+        transitions[idx(State::INTRON_1)][idx(State::INTRON_1)] = log(0.4);
+        transitions[idx(State::INTRON_1)][idx(State::ACCEPTOR_1)] = log(0.6);
+        transitions[idx(State::ACCEPTOR_1)][idx(State::END)] = 0.0;
+
+        path = {
+            State::DONOR_1,
+            State::INTRON_1,
+            State::INTRON_1,
+            State::INTRON_1,
+            State::ACCEPTOR_1
+        };
+
+        vector<Log_Prob> length_model(5, LOG_ZERO);
+        length_model[3] = log(1.0);  // only duration 3 has mass
+
+        Log_Prob geometric = Viterbi::path_log_prob(
+            path, nucs, transitions, model, 0.0, 0, path.size(), {});
+        Log_Prob hsmm = Viterbi::path_log_prob(
+            path, nucs, transitions, model, 0.0, 0, path.size(), length_model);
+
+        // Geometric includes two intron self-loops of log(0.4); HSMM zeroes them and
+        // charges log P(L=3)=0 at acceptor close.
+        Log_Prob expected_delta = -2.0 * log(0.4);
+        CHECK("HSMM path drops two intron self-loop transition costs",
+              fabs((hsmm - geometric) - expected_delta) < 1e-9);
+        CHECK("duration model changes path score vs geometric",
+              fabs(hsmm - geometric) > 1e-6);
+    }
+
+    static void test_viterbi_duration_prefers_length_mode() {
+        cout << "\n[TEST 8] Duration on vs off changes MAP path under length pressure\n";
+
+        vector<Nucleotide> nucs = {
+            Nucleotide::G, Nucleotide::T,
+            Nucleotide::A, Nucleotide::A, Nucleotide::A, Nucleotide::A,
+            Nucleotide::A, Nucleotide::G
+        };
+        Emission_Model model = make_viterbi_test_model(nucs.size());
+        auto transitions = make_viterbi_log_zero_matrix();
+        transitions[idx(State::START)][idx(State::DONOR_1)] = 0.0;
+        transitions[idx(State::DONOR_1)][idx(State::INTRON_1)] = 0.0;
+        transitions[idx(State::INTRON_1)][idx(State::INTRON_1)] = 0.0;
+        transitions[idx(State::INTRON_1)][idx(State::ACCEPTOR_1)] = 0.0;
+        transitions[idx(State::ACCEPTOR_1)][idx(State::END)] = 0.0;
+        transitions[idx(State::START)][idx(State::INTERGENIC)] = log(0.01);
+        transitions[idx(State::INTERGENIC)][idx(State::INTERGENIC)] = 0.0;
+        transitions[idx(State::INTERGENIC)][idx(State::END)] = 0.0;
+
+        vector<Log_Prob> prefer_mid(8, LOG_ZERO);
+        prefer_mid[4] = 0.0;  // log 1 at duration 4
+
+        vector<State> geometric_path = Viterbi::decode(
+            nucs, transitions, model, 1, 7, 0.0, {});
+        vector<State> duration_path = Viterbi::decode(
+            nucs, transitions, model, 1, 7, 0.0, prefer_mid);
+
+        CHECK("geometric decode returns a path", geometric_path.size() == nucs.size());
+        CHECK("duration decode returns a path", duration_path.size() == nucs.size());
+
+        Log_Prob geo_as_hsmm = Viterbi::path_log_prob(
+            geometric_path, nucs, transitions, model, 0.0, 0, geometric_path.size(), prefer_mid);
+        Log_Prob dur_as_hsmm = Viterbi::path_log_prob(
+            duration_path, nucs, transitions, model, 0.0, 0, duration_path.size(), prefer_mid);
+        CHECK("duration MAP path scores at least as high under HSMM as geometric MAP",
+              dur_as_hsmm + 1e-9 >= geo_as_hsmm);
+    }
+
     static void run_Viterbi_tests() {
         cout << "\nRunning Viterbi tests...\n";
 
@@ -182,6 +275,8 @@ namespace gene_hmm {
         test_viterbi_chooses_higher_scoring_path();
         test_viterbi_intron_body_min_length();
         test_viterbi_gene_start_penalty();
+        test_viterbi_path_log_prob_matches_duration_decode_score();
+        test_viterbi_duration_prefers_length_mode();
 
         cout << "\nDone.\n";
     }

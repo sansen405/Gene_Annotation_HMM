@@ -1,0 +1,145 @@
+Loading validation profile: fission_yeasts_dilated_cnn
+Species datasets: 4
+  s_pombe
+    train FASTA: genome_data/fission_yeasts/s_pombe/train/s_pombe_train.fna
+    train GFF:   genome_data/fission_yeasts/s_pombe/train/s_pombe_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_pombe/test/s_pombe_test.fna
+    test GFF:    genome_data/fission_yeasts/s_pombe/test/s_pombe_test.gff
+  s_japonicus
+    train FASTA: genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.fna
+    train GFF:   genome_data/fission_yeasts/s_japonicus/train/s_japonicus_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.fna
+    test GFF:    genome_data/fission_yeasts/s_japonicus/test/s_japonicus_test.gff
+  s_octosporus
+    train FASTA: genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.fna
+    train GFF:   genome_data/fission_yeasts/s_octosporus/train/s_octosporus_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.fna
+    test GFF:    genome_data/fission_yeasts/s_octosporus/test/s_octosporus_test.gff
+  s_cryophilus
+    train FASTA: genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.fna
+    train GFF:   genome_data/fission_yeasts/s_cryophilus/train/s_cryophilus_train.gff
+    test FASTA:  genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.fna
+    test GFF:    genome_data/fission_yeasts/s_cryophilus/test/s_cryophilus_test.gff
+Training chromosomes: 66
+Evaluation chromosomes: 4
+Usable training intervals: 6448
+Usable evaluation intervals: 3783
+
+Decoding usable evaluation intervals
+
+=== Holdout Validation (+ strand) ===
+Metric                               Value
+Evaluated bases                   11746239
+Exact 21-state accuracy             0.9730
+Illegal transitions                      0
+Predicted gene intervals              3729
+Gold gene intervals                   3694
+Intron length cap p95                  196
+Gene start penalty                  1.0000
+Intron duration model            histogram
+Duration table size                    197
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                     -6.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9705      0.9827      0.9765      0.9791   5120326    155645     90386   6379882
+intron            0.9214      0.7673      0.8373      0.9923    232779     19860     70587  11423013
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.8533      0.8614        3182        3729        3694
+stop              0.9142      0.9228        3409        3729        3694
+donor             0.9000      0.8476        3331        3701        3930
+acceptor          0.8979      0.8455        3323        3701        3930
+
+Structure Metrics (exact interval match):
+Boundary       Precision      Recall       Exact   Predicted        Gold
+exon              0.8367      0.8155        6217        7430        7624
+gene              0.8091      0.8167        3017        3729        3694
+gene_sens         0.8167    (recall)
+gene_spec         0.8091 (precision)
+
+=== Holdout Validation (- strand) ===
+Metric                               Value
+Evaluated bases                   11819371
+Exact 21-state accuracy             0.9717
+Illegal transitions                      0
+Predicted gene intervals              3785
+Gold gene intervals                   3749
+Intron length cap p95                  196
+Gene start penalty                  1.0000
+Intron duration model            histogram
+Duration table size                    197
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                     -6.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9671      0.9828      0.9749      0.9774   5183444    176146     90643   6369138
+intron            0.9228      0.7796      0.8452      0.9927    235996     19741     66702  11496932
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.8415      0.8496        3185        3785        3749
+stop              0.9186      0.9274        3477        3785        3749
+donor             0.9085      0.8556        3395        3737        3968
+acceptor          0.9120      0.8589        3408        3737        3968
+
+Structure Metrics (exact interval match):
+Boundary       Precision      Recall       Exact   Predicted        Gold
+exon              0.8433      0.8220        6343        7522        7717
+gene              0.8069      0.8146        3054        3785        3749
+gene_sens         0.8146    (recall)
+gene_spec         0.8069 (precision)
+
+=== Full Genome Holdout Validation (both strands) ===
+Metric                               Value
+Evaluated bases                   23565610
+Exact 21-state accuracy             0.9723
+Illegal transitions                      0
+Predicted gene intervals              7514
+Gold gene intervals                   7443
+Intron length cap p95                  196
+Gene start penalty                  1.0000
+Intron duration model            histogram
+Duration table size                    197
+CNN donor scale                     1.0000
+CNN donor bias                      0.0000
+CNN acceptor scale                  1.0000
+CNN acceptor bias                   0.0000
+CNN start scale                     1.0000
+CNN start bias                     -6.0000
+
+Classification Metrics:
+Label          Precision      Recall          F1    Accuracy        TP        FP        FN        TN
+coding            0.9688      0.9827      0.9757      0.9782  10303770    331791    181029  12749020
+intron            0.9221      0.7735      0.8413      0.9925    468775     39601    137289  22919945
+
+Boundary Metrics:
+Boundary       Precision      Recall       Exact   Predicted        Gold
+start             0.8474      0.8554        6367        7514        7443
+stop              0.9164      0.9252        6886        7514        7443
+donor             0.9043      0.8516        6726        7438        7898
+acceptor          0.9049      0.8522        6731        7438        7898
+
+Structure Metrics (exact interval match):
+Boundary       Precision      Recall       Exact   Predicted        Gold
+exon              0.8400      0.8187       12560       14952       15341
+gene              0.8080      0.8157        6071        7514        7443
+gene_sens         0.8157    (recall)
+gene_spec         0.8080 (precision)
+
+Saved combined results to /Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/validation/combined.txt
+Saved s_pombe results to /Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/validation/s_pombe.txt
+Saved s_japonicus results to /Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/validation/s_japonicus.txt
+Saved s_octosporus results to /Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/validation/s_octosporus.txt
+Saved s_cryophilus results to /Users/rishigandhe/genome-annotation-hidden-markov-model/experiments/desres_v2/backbone_ablation/dilated_cnn/validation/s_cryophilus.txt

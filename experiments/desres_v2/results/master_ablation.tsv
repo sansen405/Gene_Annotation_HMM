@@ -1,0 +1,10 @@
+component	metric	value	notes
+backbone_smoke	n_backbones	3	DilatedCNN/BiLSTM/Transformer
+calibration	ece	0.9184358706751664	holdout-candidate smoke
+ssl	tokens_supervised	115091	windowed MLM
+segment_crf	crf_nll	29.650089263916016	soft-Viterbi path
+coral	coral_reduction	6.88172054452707e-07	fission→fungi feature align
+fission_holdout_V5	exact_gene_p	0.8080	validation/results/version_5
+fission_holdout_V5	intron_f1	0.8413	validation/results/version_5
+fungi_zeroshot	exact_gene_p	0.3898	transfer_summary.tsv
+fungi_indomain_plus	exact_gene_p	0.4557	transfer_summary.tsv

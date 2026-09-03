@@ -25,6 +25,17 @@ namespace gene_hmm {
                 const Emission_Model& emission_model,
                 Log_Prob gene_start_penalty);
 
+            // When intron_length_log_prob is non-empty, matches Viterbi's semi-Markov
+            // intron duration: geometric self-loop cost dropped; log P(length) charged
+            // once on intron -> acceptor. min_intron_body_length hard-gates acceptor exit.
+            static Probability_Matrix posterior_log_probs(
+                const vector<Nucleotide>& nucleotides,
+                const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+                const Emission_Model& emission_model,
+                Log_Prob gene_start_penalty,
+                const vector<Log_Prob>& intron_length_log_prob,
+                size_t min_intron_body_length = 0);
+
             static vector<double> confidence(
                 const vector<Nucleotide>& nucleotides,
                 const vector<State>& predicted_states,
@@ -37,6 +48,14 @@ namespace gene_hmm {
                 const Transition_Model::Log_Prob_Matrix& transition_log_probs,
                 const Emission_Model& emission_model,
                 Log_Prob gene_start_penalty);
+
+            static vector<double> confidence(
+                const vector<Nucleotide>& nucleotides,
+                const vector<State>& predicted_states,
+                const Transition_Model::Log_Prob_Matrix& transition_log_probs,
+                const Emission_Model& emission_model,
+                Log_Prob gene_start_penalty,
+                const vector<Log_Prob>& intron_length_log_prob,
+                size_t min_intron_body_length = 0);
     };
 }
-

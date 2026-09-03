@@ -1,0 +1,3 @@
+tokens_supervised=115091
+n_windows=6336
+claim: pretrained encoder on 115091 masked nucleotides (windowed MLM) before supervised fine-tuning

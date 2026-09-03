@@ -1,0 +1,54 @@
+=== Helixer baseline (fungi lineage model via Docker) ===
+
+--- s_pombe (len=5,579,133, wall=0.0s) ---
+coding  P=0.9918 R=0.9871 F1=0.9894
+intron  P=0.9025 R=0.9223 F1=0.9122
+start   P=0.9108 R=0.8945 exact=2094 pred=2299 gold=2341
+stop    P=0.9465 R=0.9291 exact=2176 pred=2299 gold=2342
+genes   predicted=2299 gold=2342
+
+--- s_japonicus (len=4,291,692, wall=0.0s) ---
+coding  P=0.9545 R=0.9873 F1=0.9706
+intron  P=0.7745 R=0.8864 F1=0.8267
+start   P=0.8522 R=0.8768 exact=1615 pred=1895 gold=1842
+stop    P=0.9034 R=0.9294 exact=1712 pred=1895 gold=1842
+genes   predicted=1895 gold=1842
+
+--- s_octosporus (len=4,622,725, wall=0.0s) ---
+coding  P=0.9874 R=0.9900 F1=0.9887
+intron  P=0.8720 R=0.9122 F1=0.8916
+start   P=0.9091 R=0.9187 exact=1841 pred=2025 gold=2004
+stop    P=0.9314 R=0.9411 exact=1886 pred=2025 gold=2004
+genes   predicted=2025 gold=2004
+
+--- s_cryophilus (len=2,876,736, wall=0.0s) ---
+coding  P=0.9790 R=0.9864 F1=0.9827
+intron  P=0.8528 R=0.8578 F1=0.8553
+start   P=0.8728 R=0.8633 exact=1118 pred=1281 gold=1295
+stop    P=0.9219 R=0.9113 exact=1181 pred=1281 gold=1296
+genes   predicted=1281 gold=1297
+
+=== Combined (all holdout chromosomes) ===
+Evaluated bases                   17370286
+coding  P=0.9789 R=0.9878 F1=0.9833
+intron  P=0.8509 R=0.8993 F1=0.8744
+start   P=0.8891 R=0.8912 exact=6668 pred=7500 gold=7482
+stop    P=0.9273 R=0.9293 exact=6955 pred=7500 gold=7484
+
+=== Side-by-side (nucleotide metrics on same holdout FASTAs) ===
+Metric                     Helixer  This HMM (V4.2)
+Coding F1                    0.9833           0.9757
+Intron F1                    0.8744           0.8413
+Start boundary P             0.8891           0.8474
+Start boundary R             0.8912           0.8554
+Stop boundary P              0.9273           0.9164
+Stop boundary R              0.9293           0.9252
+
+Notes: Helixer fungi lineage model applied to all four species (trained parameters unavailable for japonicus/octosporus/cryophilus). Coding/intron labels are painted from CDS features on both strands into one mask per chromosome (intron = gaps between consecutive CDS of the same transcript). Helixer CDS already includes the stop codon (no +3 extension). HMM metrics from validation/results/version_4/combined.txt evaluate each strand separately and sum (~2× bases); nucleotide F1 is still the fairest available head-to-head on these FASTAs. HMM also reports donor/acceptor.
+
+=== Three-way note ===
+Augustus report: /Users/rishigandhe/genome-annotation-hidden-markov-model/validation/baselines/augustus/combined.txt
+HMM report:      /Users/rishigandhe/genome-annotation-hidden-markov-model/validation/results/version_4/combined.txt
+Compare Coding/Intron F1 and start/stop P/R across the three files.
+
+Wrote /Users/rishigandhe/genome-annotation-hidden-markov-model/validation/baselines/helixer/combined.txt

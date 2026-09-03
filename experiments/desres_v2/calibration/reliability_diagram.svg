@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420">
+  <rect width="100%" height="100%" fill="white"/>
+  <line x1="50.0" y1="370.0" x2="370.0" y2="50.0" stroke="#999" stroke-dasharray="4"/>
+  <polyline fill="none" stroke="#1f4e79" stroke-width="2" points="54.6,50.0 92.4,50.0 360.1,50.0"/>
+  <circle cx="54.6" cy="50.0" r="4" fill="#1f4e79"/>
+<circle cx="92.4" cy="50.0" r="4" fill="#1f4e79"/>
+<circle cx="360.1" cy="50.0" r="4" fill="#1f4e79"/>
+  <text x="50" y="24" font-family="Helvetica" font-size="14">Reliability diagram (ECE=0.918)</text>
+  <text x="210" y="408" text-anchor="middle" font-family="Helvetica" font-size="12">confidence</text>
+  <text x="16" y="210" transform="rotate(-90 16,210)" font-family="Helvetica" font-size="12">accuracy</text>
+</svg>

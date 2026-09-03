@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -22,13 +23,41 @@ def run(command: list[str], description: str) -> None:
     log(f"finished: {description} elapsed={time.perf_counter() - start_time:.1f}s")
 
 
+def resolve_json_include() -> str:
+    candidates = [
+        Path(os.environ["JSON_INCLUDE"]) if "JSON_INCLUDE" in os.environ else None,
+        Path("/opt/homebrew/include"),
+        Path("/usr/local/include"),
+        Path("/usr/include"),
+    ]
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        if (candidate / "nlohmann" / "json.hpp").is_file():
+            return str(candidate)
+    # pkg-config fallback
+    try:
+        out = subprocess.check_output(
+            ["pkg-config", "--cflags-only-I", "nlohmann_json"],
+            text=True,
+        ).strip()
+        if out.startswith("-I"):
+            return out[2:].split()[0]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+    raise RuntimeError(
+        "nlohmann/json.hpp not found. Install nlohmann-json or set JSON_INCLUDE."
+    )
+
+
 def compile_hmm_trainer(binary_path: Path, cxx: str) -> None:
+    json_include = resolve_json_include()
     run(
         [
             cxx,
             "-std=c++17",
             "-Isrc",
-            "-I/opt/homebrew/include",
+            f"-I{json_include}",
             "src/model/training_pipeline/train_hmm_matrices.cpp",
             "src/model/transition/Transition_Model.cpp",
             "src/model/emission/Emission_Model.cpp",

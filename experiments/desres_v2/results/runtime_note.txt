@@ -1,0 +1,3 @@
+Neural smoke forwards: backbone_ablation/smoke_forward.json
+C++ HSMM: make bench-viterbi
+Laptop: windowed ≤~few M params; no foundation-model fine-tunes.

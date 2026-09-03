@@ -1,0 +1,4 @@
+backbone	params	forward_s_smoke	exact_gene_f1	intron_f1	ece_donor	notes
+dilated_cnn	707715	0.0939				smoke_only
+bilstm	1981059	0.0835				smoke_only
+transformer	1290243	0.0191				smoke_only
