@@ -50,3 +50,6 @@ validation/baselines/helixer/fetch_models.log
 
 build_cmake/
 .cursor/
+
+build_cmake/
+.cursor/
